@@ -389,11 +389,479 @@ Both use structural typing, but serve different purposes.
 ---
 
 <details>
+<summary>Enums (Enumerations)</summary>
+
+## What Are Enums?
+
+**Enums allow you to define a set of named constants.**
+
+## Your Example
+
+```typescript
+enum useRole {
+    ADMIN,   // 0
+    USER,    // 1
+    GUEST    // 2
+}
+```
+
+## Key Points
+
+- **Numeric enums** (default): Auto-increment from 0
+- **String enums**: More readable, better for debugging
+- **Compile to JavaScript**: Not erased like types
+- **Bidirectional mapping**: `useRole.ADMIN` = 0, `useRole[0]` = "ADMIN"
+
+## When to Use
+
+- Fixed sets of related constants
+- Replacing magic numbers
+- State machines
+- API response codes
+
+## Modern Alternative
+
+**Literal type unions** are often preferred (zero runtime cost):
+
+```typescript
+type Role = "admin" | "user" | "guest";
+```
+
+</details>
+
+---
+
+<details>
+<summary>Literal Types</summary>
+
+## What Are Literal Types?
+
+**Literal types specify exact values a variable can hold.**
+
+## String Literal Types
+
+```typescript
+type Status = "success" | "error" | "loading";
+type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+```
+
+## Numeric Literal Types
+
+```typescript
+type DiceValue = 1 | 2 | 3 | 4 | 5 | 6;
+type HttpStatus = 200 | 404 | 500;
+```
+
+## Key Points
+
+- Specify exact values, not just general types
+- Zero runtime overhead (erased at compile-time)
+- Enable discriminated unions
+- Better alternative to enums for simple cases
+- Provide autocomplete and type safety
+
+## Common Use Cases
+
+- HTTP methods
+- Status values
+- Configuration options
+- Event types
+- State machines
+
+</details>
+
+---
+
+<details>
+<summary>Function Return Types</summary>
+
+## The Three Special Return Types
+
+### 1. `number` (or any type) - Returns a value
+
+```typescript
+function add2(a: number, b: number): number {
+    return a + b;
+}
+```
+
+**Meaning**: Function returns a value of this type
+
+---
+
+### 2. `void` - Returns nothing
+
+```typescript
+function log(message: string): void {
+    console.log(message);
+}
+```
+
+**Meaning**: Function performs an action but returns nothing
+
+---
+
+### 3. `never` - Never returns
+
+```typescript
+function throwError(message: string): never {
+    throw new Error(message);
+}
+```
+
+**Meaning**: Function always throws or runs forever
+
+---
+
+## Comparison
+
+| Return Type | Returns Value? | Function Completes? |
+|-------------|----------------|---------------------|
+| `number` | ✅ Yes | ✅ Yes |
+| `void` | ❌ No | ✅ Yes |
+| `never` | ❌ Never | ❌ Never |
+
+</details>
+
+---
+
+<details>
+<summary>Functions as Types</summary>
+
+## What Are Function Types?
+
+**Function types describe the shape of a function** - parameters and return type.
+
+## Syntax
+
+```typescript
+(param1: Type1, param2: Type2) => ReturnType
+```
+
+## Example
+
+```typescript
+type MathOperation = (a: number, b: number) => number;
+
+const add: MathOperation = (a, b) => a + b;
+const subtract: MathOperation = (a, b) => a - b;
+```
+
+## Common Use Cases
+
+- **Callbacks**: Pass functions as arguments
+- **Event handlers**: Type-safe event handling
+- **Higher-order functions**: Functions that return functions
+- **Middleware**: Chain of functions
+
+## Example: Callback
+
+```typescript
+type Callback = (item: string) => void;
+
+function processItems(items: string[], callback: Callback): void {
+  items.forEach(callback);
+}
+```
+
+</details>
+
+---
+
+<details>
+<summary>The `unknown` Type</summary>
+
+## What Is `unknown`?
+
+**Type-safe alternative to `any`.** Means "I don't know the type, but I'll check before using."
+
+## The Problem with `any`
+
+```typescript
+let data: any = getData();
+data.toUpperCase();  // ✓ Compiles (but might crash!)
+```
+
+**`any` disables all type checking.**
+
+## The Solution: `unknown`
+
+```typescript
+let data: unknown = getData();
+// data.toUpperCase();  // ✗ ERROR: Must check type first
+
+if (typeof data === "string") {
+  console.log(data.toUpperCase());  // ✓ Safe
+}
+```
+
+**`unknown` forces you to validate before using.**
+
+## When to Use
+
+- Receiving data from external sources (APIs, JSON)
+- Working with untyped JavaScript libraries
+- You truly don't know the type
+
+## Best Practice
+
+**Use `unknown` instead of `any`** for better type safety.
+
+</details>
+
+---
+
+<details>
+<summary>Optional Values (`?`)</summary>
+
+## What Are Optional Values?
+
+**Properties or parameters that may or may not be present**, marked with `?`.
+
+## Optional Properties
+
+```typescript
+interface User {
+  id: number;
+  name: string;
+  email?: string;  // Optional - may be missing
+  age?: number;    // Optional - may be missing
+}
+```
+
+## Usage
+
+```typescript
+const user1: User = {
+  id: 1,
+  name: "Alice",
+  email: "alice@example.com",
+  age: 30
+};
+
+const user2: User = {
+  id: 2,
+  name: "Bob"
+  // email and age are missing - OK!
+};
+```
+
+## Optional Parameters
+
+```typescript
+function greet(name: string, greeting?: string) {
+  console.log(`${greeting || "Hello"}, ${name}`);
+}
+
+greet("Alice");        // "Hello, Alice"
+greet("Bob", "Hi");    // "Hi, Bob"
+```
+
+## Key Points
+
+- Use `?` after property/parameter name
+- Type becomes `Type | undefined`
+- Useful for API responses, configs, forms
+- Access with `??` for defaults
+
+</details>
+
+---
+
+<details>
+<summary>Nullish Coalescing (`??`)</summary>
+
+## What Is It?
+
+**Operator that provides a default value when a value is `null` or `undefined`.**
+
+## Syntax
+
+```typescript
+value ?? defaultValue
+```
+
+## How It Works
+
+```typescript
+const value1 = null ?? "default";        // "default"
+const value2 = undefined ?? "default";   // "default"
+const value3 = "" ?? "default";          // "" (empty string is NOT nullish)
+const value4 = 0 ?? "default";           // 0 (zero is NOT nullish)
+const value5 = false ?? "default";       // false (false is NOT nullish)
+```
+
+## Comparison: `??` vs. `||`
+
+```typescript
+// Using || (old way) - treats 0, "", false as "no value"
+const count1 = 0 || 10;     // 10 (WRONG!)
+
+// Using ?? (new way) - only null/undefined
+const count2 = 0 ?? 10;     // 0 (CORRECT!)
+```
+
+## When to Use
+
+- Providing defaults for optional values
+- Configuration objects
+- Form inputs
+- API responses
+
+## Best Practice
+
+**Use `??` instead of `||` for defaults** to preserve valid values like `0`, `""`, and `false`.
+
+</details>
+
+---
+
+<details>
+<summary>Type Casting (Type Assertion)</summary>
+
+## What Is It?
+
+**Telling TypeScript: "Trust me, I know what type this value is."**
+
+## Syntax
+
+```typescript
+// Preferred
+value as Type
+
+// Alternative
+<Type>value
+```
+
+## Example
+
+```typescript
+let data: any = { id: 1, name: "Alice" };
+
+// Tell TypeScript: "This is a User"
+interface User {
+  id: number;
+  name: string;
+}
+
+const user = data as User;
+console.log(user.name);  // "Alice"
+```
+
+## When to Use
+
+- Working with `any` or `unknown`
+- DOM manipulation
+- JSON parsing
+- JavaScript library interop
+
+## Important Warnings
+
+- **Type casting doesn't convert** - it just asserts
+- **TypeScript trusts you** - no runtime check
+- **Use sparingly** - it bypasses type safety
+- **Prefer type guards** for validation
+
+## Type Casting vs. Type Guards
+
+**Type casting**: "This is a User" (no check)
+**Type guards**: "Let me verify this is a User" (with check)
+
+</details>
+
+---
+
+<details>
+<summary>The `{}` Type Edge Case</summary>
+
+## What Is `{}`?
+
+**Not "any object" as you might think.** It means "any non-null, non-undefined value."
+
+## What It Accepts
+
+```typescript
+let val: {};
+
+val = "text";      // ✓ String
+val = 42;          // ✓ Number
+val = true;        // ✓ Boolean
+val = {};          // ✓ Object
+val = [];          // ✓ Array
+
+// val = null;     // ✗ ERROR
+// val = undefined; // ✗ ERROR
+```
+
+## Comparison with `object`
+
+```typescript
+let val1: {} = "text";      // ✓ OK (primitives allowed)
+let val2: object = "text";  // ✗ ERROR (primitives not allowed)
+```
+
+- `{}` = any non-null/undefined value (includes primitives)
+- `object` = non-primitive values only
+
+## Why It Exists
+
+Historical quirk of TypeScript. Rarely the right choice - prefer `unknown` or specific types.
+
+</details>
+
+---
+
+<details>
+<summary>The `Record` Type</summary>
+
+## What Is `Record<K, V>`?
+
+**Utility type that creates an object with keys of type `K` and values of type `V`.**
+
+## Syntax
+
+```typescript
+type Record<K extends keyof any, V> = {
+  [P in K]: V;
+};
+```
+
+## Example
+
+```typescript
+// Record where keys are strings, values are numbers
+type Scores = Record<string, number>;
+
+const scores: Scores = {
+  "Alice": 95,
+  "Bob": 87,
+  "Charlie": 92
+};
+```
+
+## Key Points
+
+- **Yes, it's key-value pairs** (that's what objects are)
+- Keys are flexible (any string/number)
+- Values are strict (must match type)
+- Perfect for dictionaries, maps, configs
+
+## Common Use Cases
+
+- Dictionaries: `Record<string, string>`
+- Configuration: `Record<string, string | number | boolean>`
+- API mappings: `Record<number, User>`
+
+</details>
+
+---
+
+<details>
 <summary>Type Categories and Shape-Based Checking</summary>
 
 ## The Spectrum
 
-TypeScript's type system operates on a spectrum from **value equality** to **structural shape**:
+TypeScript's type system operates on a spectrum:
 
 ```
 Primitive Types          Compound Types           Object Types
@@ -416,7 +884,7 @@ Value equality          Structural shape         Structural shape
 | **Union** | string \| number | ✅ Yes | One of several shapes |
 | **Intersection** | A & B | ✅ Yes | Combined shapes |
 
-**Note**: Primitive types are value-based (not shape-based). All other types use structural/shape-based checking.
+**Note**: Primitive types are value-based. All other types use structural/shape-based checking.
 
 </details>
 
@@ -476,6 +944,27 @@ Types are completely removed before runtime, resulting in zero runtime overhead.
 ## 6. Gradual Adoption
 TypeScript can be added to existing JavaScript incrementally.
 
+## 7. Literal Types
+Specify exact values a variable can hold (e.g., `"admin" | "user" | "guest"`).
+
+## 8. Enums
+Define sets of named constants (numeric or string values).
+
+## 9. Type Casting
+Tell TypeScript "trust me, I know the type" using `as` or `<>` syntax.
+
+## 10. Unknown Type
+Type-safe alternative to `any` that forces validation before use.
+
+## 11. Optional Values
+Properties/parameters that may be missing, marked with `?`.
+
+## 12. Nullish Coalescing
+Provide defaults only for `null`/`undefined` using `??` operator.
+
+## 13. Module Scope
+Each file is its own scope when using proper module configuration.
+
 </details>
 
 ---
@@ -493,6 +982,11 @@ TypeScript can be added to existing JavaScript incrementally.
 8. **Interfaces vs. Objects** - Use interfaces for reusable types, inline objects for one-offs
 9. **Type erasure** - Types exist only during development, completely removed at runtime
 10. **Investment pays off** - initial learning curve is outweighed by long-term benefits
+11. **Use `unknown` over `any`** for better type safety
+12. **Use `??` over `||`** for nullish defaults
+13. **Literal types over enums** for simple cases (zero runtime cost)
+14. **Type casting is an escape hatch** - use type guards when possible
+15. **Modules prevent scope conflicts** - always use proper module configuration
 
 </details>
 
@@ -507,6 +1001,8 @@ TypeScript can be added to existing JavaScript incrementally.
 - Master utility types (Partial, Required, Readonly, Pick, Omit)
 - Understand type guards and type narrowing
 - Learn about advanced types (conditional types, mapped types)
+- Study type inference and contextual typing
+- Explore decorators and metadata reflection
 
 </details>
 
