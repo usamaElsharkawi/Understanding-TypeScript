@@ -1006,6 +1006,3 @@ Each file is its own scope when using proper module configuration.
 
 </details>
 
----
-
-*For the complete TypeScript fundamentals overview, see [Get-started/README.md](../Get-started/README.md)*
