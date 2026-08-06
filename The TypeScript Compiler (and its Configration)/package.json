@@ -1,0 +1,16 @@
+{
+  "name": "the-typescript-compiler-(and-its-configration)",
+  "version": "1.0.0",
+  "description": "The TypeScript compiler (`tsc`) is a **transpiler + type checker** that converts TypeScript code (`.ts`) into JavaScript (`.js`) that browsers, Node.js, and other runtimes can execute.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^26.1.2"
+  }
+}
