@@ -43,4 +43,5 @@ const add = (a:number , b:number = 2)=>{
 console.log(add(10,6))
 console.log(add(10))
 
-cont  numbers:[1,-1]
+const numbers:1|-1 = 1
+
