@@ -268,3 +268,87 @@ function getArea(shape: Shape) {
 We implemented two examples:
 1. **`NetworkCard`** — loading / error / success states with a switch statement
 2. **`Shape`** — circle / rectangle / square with an if-else chain
+
+## Lecture 92: Type Guards via `instanceof`
+
+The `instanceof` operator checks whether an object is an **instance of a class**, and TypeScript uses it as a **type guard** to narrow union types of class instances.
+
+### Basic Usage
+```typescript
+class User {
+  name = "usama";
+  greet() { console.log("Hello!"); }
+}
+
+class Admin {
+  role = "admin";
+  manage() { console.log("Managing..."); }
+}
+
+function use(user: User | Admin) {
+  if (user instanceof User) {
+    user.greet(); // ✅ TypeScript narrows to User
+  } else {
+    user.manage(); // ✅ TypeScript narrows to Admin
+  }
+}
+```
+
+### How It Works
+- `instanceof` checks the object's prototype chain at runtime
+- When used in an `if`/`else`, TypeScript **narrows** the type to the class on the right side
+- In the `else` branch, TypeScript infers the **remaining** union member
+
+### `instanceof` vs. `typeof` vs. `in`
+
+| Operator | Works On | Narrows To | Use Case |
+|---------|----------|------------|----------|
+| `typeof` | Primitives only | `"string"`, `"number"`, etc. | Primitive type checks |
+| `in` | Property existence | Any object with that property | Union members without shared discriminant |
+| `instanceof` | **Classes only** | The specific class instance | Class-based unions |
+
+### Why `typeof` Fails for Classes
+```typescript
+class User {}
+class Admin {}
+
+function use(user: User | Admin) {
+  if (typeof user === "object") {
+    // ❌ Still User | Admin — both classes return "object"
+    user.greet();  // ❌ Error!
+    user.manage(); // ❌ Error!
+  }
+}
+```
+
+### Class Hierarchies (Inheritance)
+`instanceof` works correctly with inherited classes — TypeScript narrows to the **class itself**, and you can still access **inherited properties/methods** from parent classes:
+
+```typescript
+class Animal {
+  eat() { console.log("Eating..."); }
+}
+
+class Dog extends Animal {
+  bark() { console.log("Woof!"); }
+}
+
+class Cat extends Animal {
+  meow() { console.log("Meow!"); }
+}
+
+function makeSound(animal: Dog | Cat) {
+  if (animal instanceof Dog) {
+    animal.bark(); // ✅ Dog
+    animal.eat();  // ✅ Inherited from Animal
+  } else {
+    animal.meow(); // ✅ Cat
+    animal.eat();  // ✅ Inherited from Animal
+  }
+}
+```
+
+### Code Demo (in `src/instanceof.ts`)
+We implemented:
+1. **`User` / `Admin`** classes with different methods, narrowed via `instanceof`
+2. **`Animal` → `Dog` / `Cat`** hierarchy, demonstrating that inherited methods are still accessible after narrowing

@@ -15,4 +15,28 @@ function loadData(source) {
     }
     //source.connectionUrl  to reach out a DB
 }
+class User {
+    name;
+    constructor(name) {
+        this.name = name;
+    }
+    join() {
+        // ...
+    }
+}
+class Admin {
+    constructor(permissions) { }
+    scan() {
+        // ...
+    }
+}
+const user = new User('Max');
+const admin = new Admin(['ban', 'restore']);
+function init(entity) {
+    if (entity instanceof User) {
+        entity.join();
+        return;
+    }
+    entity.scan();
+}
 //# sourceMappingURL=guards.js.map
