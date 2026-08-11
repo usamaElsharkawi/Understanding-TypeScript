@@ -96,3 +96,105 @@ type Product = Identifiable & Timestamped & { title: string; price: number };
 type Order = Identifiable & Timestamped & { items: string[]; total: number };
 // All share id, createdAt, updatedAt — defined once, reused everywhere
 ```
+
+## Lecture 90: More on Type Guards
+
+**Type guards** allow you to **narrow** a type at runtime — when a condition is true, TypeScript understands the value is a specific type, enabling safe property access.
+
+### Common Type Guard Patterns
+
+#### 1. `typeof` — for primitive types
+```typescript
+function process(value: string | number) {
+  if (typeof value === "string") {
+    return value.toUpperCase(); // ✅ TypeScript knows: string
+  }
+  return value.toFixed(2); // ✅ TypeScript knows: number
+}
+```
+
+#### 2. `typeof` cannot distinguish between different object/class types
+> **Note**: `typeof` *does* work on objects — it returns `"object"` for all objects/classes. But because `typeof new Person()` and `typeof new Place()` both return `"object"`, it provides **no useful information** for distinguishing between them.
+
+```typescript
+class Person {
+  name = "usama";
+  walk() {}
+}
+class Place {
+  location = "Cairo";
+  visit() {}
+}
+
+function use(p: Person | Place) {
+  if (typeof p === "object") {
+    // p is still Person | Place — can't access .walk() or .visit()
+  }
+}
+```
+
+**Use `instanceof` for classes instead:**
+```typescript
+function use(p: Person | Place) {
+  if (p instanceof Person) {
+    p.walk(); // ✅ TypeScript narrows to Person
+  } else {
+    p.visit(); // ✅ TypeScript narrows to Place
+  }
+}
+```
+
+#### 3. `in` operator — checks property existence on union members
+```typescript
+type FileSource = { path: string };
+type DBSource = { connectionUrl: string };
+type Source = FileSource | DBSource;
+
+function loadData(source: Source) {
+  if ("path" in source) {
+    // source is narrowed to FileSource
+    console.log("Opening file:", source.path);
+  } else {
+    // source is narrowed to DBSource
+    console.log("Connecting to DB:", source.connectionUrl);
+  }
+}
+```
+
+#### 4. `Array.isArray()` — for array type guards
+```typescript
+function processItems(items: string | string[]) {
+  if (Array.isArray(items)) {
+    // items is narrowed to string[]
+    items.map(i => console.log(i));
+  } else {
+    // items is narrowed to string
+    console.log(items);
+  }
+}
+```
+
+#### 5. Literal type checks for string/number unions
+```typescript
+type Status = "success" | "error";
+function handle(s: Status) {
+  if (s === "success") {
+    // s is narrowed to "success"
+  } else {
+    // s is narrowed to "error"
+  }
+}
+```
+
+### Key Takeaway
+Type guards don't just **check conditions at runtime** — they also **communicate to TypeScript** which type branch you're in, giving you safe property access and proper autocomplete within each branch.
+
+### Type Guard Reference Table
+| Guard | Distinguishes |
+|-------|--------------|
+| `typeof x === "string"` | ✅ Primitives (`string`, `number`, `boolean`) |
+| `typeof x === "object"` | ❌ Cannot distinguish different object/class types |
+| `x instanceof Class` | ✅ Different class types |
+| `"prop" in x` | ✅ Object types via property presence |
+| `Array.isArray(x)` | ✅ Arrays vs. non-arrays |
+| `x === "literal"` | ✅ String/number literal union members |
