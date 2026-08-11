@@ -1227,8 +1227,155 @@ const api: ApiClient = {
 - **Multiple overloads** can be defined in interfaces
 - **Choose based on needs**: Use interfaces for object shapes (allows merging), use type aliases for complex types (unions, primitives, tuples)
 
-## Next Up: Lecture 84
-We'll learn how to implement interfaces with classes using the `implements` keyword.
+## Lecture 84: Implementing Interfaces
+The `implements` keyword makes a class guarantee it follows an interface's contract. It's like a promise: "This class will have all the properties and methods defined in the interface."
+
+```typescript
+// Define an interface (contract)
+interface User {
+    name: string;
+    age: number;
+    greet(): string;
+}
+
+// Class PROMISES to implement the interface
+class UserClass implements User {
+    // Must have all properties from interface
+    name: string;
+    age: number;
+    
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+    
+    // Must have all methods from interface
+    greet(): string {
+        return `Hello, I'm ${this.name}`;
+    }
+}
+
+const user = new UserClass("Alice", 30);
+console.log(user.greet());  // "Hello, I'm Alice"
+```
+
+### Multiple Interfaces:
+A class can implement multiple interfaces:
+
+```typescript
+interface Flyable {
+    fly(): void;
+    land(): void;
+}
+
+interface Swimmable {
+    swim(): void;
+    dive(): void;
+}
+
+// Class implements BOTH interfaces
+class Duck implements Flyable, Swimmable {
+    name: string;
+    
+    constructor(name: string) {
+        this.name = name;
+    }
+    
+    // From Flyable
+    fly(): void {
+        console.log(`${this.name} is flying`);
+    }
+    
+    land(): void {
+        console.log(`${this.name} landed`);
+    }
+    
+    // From Swimmable
+    swim(): void {
+        console.log(`${this.name} is swimming`);
+    }
+    
+    dive(): void {
+        console.log(`${this.name} is diving`);
+    }
+}
+```
+
+### Readonly Properties in Interfaces:
+```typescript
+interface User {
+    readonly id: string;
+    name: string;
+    age: number;
+}
+
+class UserImpl implements User {
+    readonly id: string;
+    name: string;
+    age: number;
+    
+    constructor(id: string, name: string, age: number) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+    }
+}
+
+const user = new UserImpl("001", "Alice", 30);
+// user.id = "002";  // ❌ Error! Readonly
+```
+
+### Real-World Example:
+```typescript
+interface PaymentProcessor {
+    processPayment(amount: number): Promise<boolean>;
+    refund(transactionId: string): Promise<boolean>;
+    getStatus(transactionId: string): Promise<string>;
+}
+
+class StripeProcessor implements PaymentProcessor {
+    async processPayment(amount: number): Promise<boolean> {
+        console.log(`Processing $${amount} via Stripe`);
+        return true;
+    }
+    
+    async refund(transactionId: string): Promise<boolean> {
+        console.log(`Refunding ${transactionId} via Stripe`);
+        return true;
+    }
+    
+    async getStatus(transactionId: string): Promise<string> {
+        return "completed";
+    }
+}
+
+class PayPalProcessor implements PaymentProcessor {
+    async processPayment(amount: number): Promise<boolean> {
+        console.log(`Processing $${amount} via PayPal`);
+        return true;
+    }
+    
+    async refund(transactionId: string): Promise<boolean> {
+        console.log(`Refunding ${transactionId} via PayPal`);
+        return true;
+    }
+    
+    async getStatus(transactionId: string): Promise<string> {
+        return "completed";
+    }
+}
+```
+
+### Key Points:
+- **`implements` enforces structure** - Class must match interface exactly
+- **TypeScript checks at compile time** - Errors caught before runtime
+- **Can implement multiple interfaces** - More flexible than class inheritance
+- **Can have extra properties/methods** - Interface is minimum requirement
+- **No runtime effect** - `implements` is removed in compiled JS
+- **Use for polymorphism** - Different classes can implement same interface
+
+## Next Up: Lecture 85
+We'll learn how to use interfaces to ensure base types and create flexible, type-safe code.
 
 This section uses TypeScript with:
 - ES6+ target for modern syntax support
