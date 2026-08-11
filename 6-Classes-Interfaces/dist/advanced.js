@@ -18,9 +18,27 @@ class User {
     get fullName() {
         return this._firstName + " " + this._lastName;
     }
+    static eid = 'USER';
+    static greet() {
+        console.log("hello!");
+    }
 }
 const usama = new User();
 usama.firstName = "usama";
 usama.lastName = "el sharkawi";
+console.log(User.eid);
 console.log(usama.fullName);
+class Emplyee extends User {
+    jobTitle;
+    constructor(jobTitle) {
+        super();
+        this.jobTitle = jobTitle;
+    }
+    work() {
+        console.log(`${this._firstName} doing his work now`);
+    }
+}
+const mohsen = new Emplyee("بتاع بكارى");
+mohsen.firstName = "mohsen";
+mohsen.work();
 //# sourceMappingURL=advanced.js.map

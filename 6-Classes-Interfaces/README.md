@@ -10,6 +10,8 @@
 - **73**: Understanding Getters
 - **74**: Setting Values with Setters
 - **75**: Exploring Static Properties & Methods
+- **76**: Understanding Inheritance
+- **77**: The "protected" Modifier
 
 ## Lecture 67: Module Introduction
 Welcome to the Classes & Interfaces section! This part of the course focuses on object-oriented programming in TypeScript. Classes are fundamental building blocks that allow you to bundle data and functionality together, making your code more organized and maintainable.
@@ -408,8 +410,282 @@ console.log(StringUtils.reverse("hello"));     // "olleh"
 | **Use case** | Utilities, counters, config | Object-specific data |
 | **Can access** | Other static members | Both static and instance |
 
-## Next Up: Lecture 76
-We'll cover inheritance next, which allows classes to inherit properties and methods from other classes.
+## Lecture 76: Understanding Inheritance
+Inheritance allows a class to inherit properties and methods from another class, creating a parent-child relationship.
+
+```typescript
+// Parent class (Base class)
+class Animal {
+    name: string;
+    
+    constructor(name: string) {
+        this.name = name;
+    }
+    
+    eat(): void {
+        console.log(`${this.name} is eating`);
+    }
+    
+    sleep(): void {
+        console.log(`${this.name} is sleeping`);
+    }
+}
+
+// Child class (Derived class) - inherits from Animal
+class Dog extends Animal {
+    breed: string;
+    
+    constructor(name: string, breed: string) {
+        super(name);  // Call parent constructor
+        this.breed = breed;
+    }
+    
+    bark(): void {
+        console.log(`${this.name} says: Woof!`);
+    }
+}
+
+const myDog = new Dog("Max", "Golden Retriever");
+
+// Inherited from Animal
+myDog.eat();      // "Max is eating"
+myDog.sleep();    // "Max is sleeping"
+
+// Dog's own method
+myDog.bark();     // "Max says: Woof!"
+```
+
+### Key Concepts:
+
+**`extends`** - Creates the inheritance relationship  
+**`super()`** - Calls the parent constructor (MUST be called in child constructor)  
+**`super.method()`** - Calls parent method from child class
+
+### Method Overriding:
+```typescript
+class Animal {
+    makeSound(): void {
+        console.log(`${this.name} makes a sound`);
+    }
+}
+
+class Cat extends Animal {
+    makeSound(): void {
+        console.log(`${this.name} says: Meow!`);
+    }
+}
+
+const cat = new Cat("Whiskers");
+cat.makeSound();  // "Whiskers says: Meow!"
+```
+
+### Using `super` to Access Parent Methods:
+```typescript
+class Animal {
+    makeSound(): void {
+        console.log(`${this.name} makes a generic sound`);
+    }
+}
+
+class Dog extends Animal {
+    makeSound(): void {
+        super.makeSound();  // Call parent method first
+        console.log(`${this.name} barks loudly!`);
+    }
+}
+
+const dog = new Dog("Max");
+dog.makeSound();
+// Output:
+// "Max makes a generic sound"
+// "Max barks loudly!"
+```
+
+### Real-World Example:
+```typescript
+class Product {
+    id: string;
+    name: string;
+    price: number;
+    
+    constructor(id: string, name: string, price: number) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+    }
+    
+    getInfo(): string {
+        return `${this.name} - $${this.price}`;
+    }
+}
+
+class Book extends Product {
+    author: string;
+    pages: number;
+    
+    constructor(id: string, name: string, price: number, author: string, pages: number) {
+        super(id, name, price);
+        this.author = author;
+        this.pages = pages;
+    }
+    
+    getInfo(): string {
+        return `${super.getInfo()} by ${this.author}`;
+    }
+}
+
+const book = new Book("B001", "TypeScript Guide", 29.99, "Max", 350);
+console.log(book.getInfo());  // "TypeScript Guide - $29.99 by Max"
+```
+
+### Key Points:
+- Child classes inherit **public** and **protected** members from parent
+- Child classes do **NOT** inherit private members
+- Must call `super()` before using `this` in child constructor
+- Can override parent methods to provide custom implementation
+- Use `super.method()` to call parent's version of an overridden method
+- Use `instanceof` to check if an object is an instance of a class
+
+## Lecture 77: The "protected" Modifier
+The `protected` modifier allows access within the class and its subclasses, but not from external code. Think of it as "family-only" access.
+
+```typescript
+class Animal {
+    public name: string;           // Accessible everywhere
+    protected _energy: number;     // Accessible in class and subclasses
+    private _dna: string;          // Accessible only in this class
+    
+    constructor(name: string, energy: number, dna: string) {
+        this.name = name;
+        this._energy = energy;
+        this._dna = dna;
+    }
+    
+    protected sleep(hours: number): void {
+        this._energy += hours * 10;
+    }
+    
+    getEnergy(): number {
+        return this._energy;
+    }
+}
+
+class Dog extends Animal {
+    breed: string;
+    
+    constructor(name: string, energy: number, dna: string, breed: string) {
+        super(name, energy, dna);
+        this.breed = breed;
+    }
+    
+    rest(hours: number): void {
+        this.sleep(hours);  // ✅ Can access protected method
+        console.log(`${this.name} rested for ${hours} hours`);
+    }
+    
+    getDna(): string {
+        // return this._dna;  // ❌ Error! Private members not inherited
+        return "Cannot access DNA";
+    }
+}
+
+const dog = new Dog("Max", 100, "ATGCC", "Golden Retriever");
+
+console.log(dog.name);  // "Max" ✅ - public
+// console.log(dog._energy);  // ❌ Error! Protected from external code
+// dog.sleep(5);              // ❌ Error! Protected from external code
+
+dog.rest(5);  // ✅ OK - Dog can call protected method
+console.log(dog.getEnergy());  // ✅ OK - through public method
+```
+
+### Access Comparison:
+
+| Modifier | Own Class | Subclass | External Code |
+|----------|-----------|----------|---------------|
+| `public` | ✅ | ✅ | ✅ |
+| `protected` | ✅ | ✅ | ❌ |
+| `private` | ✅ | ❌ | ❌ |
+
+### Use Case: Template Method Pattern
+```typescript
+abstract class DataProcessor {
+    process(data: string): void {
+        this.validate(data);
+        this.transform(data);
+        this.save(data);
+    }
+    
+    protected abstract validate(data: string): void;
+    protected abstract transform(data: string): void;
+    protected abstract save(data: string): void;
+}
+
+class CsvProcessor extends DataProcessor {
+    protected validate(data: string): void {
+        console.log("Validating CSV...");
+    }
+    
+    protected transform(data: string): void {
+        console.log("Converting to JSON...");
+    }
+    
+    protected save(data: string): void {
+        console.log("Saving to database...");
+    }
+}
+```
+
+### Use Case: Shared Internal State
+```typescript
+class Vehicle {
+    protected _speed: number = 0;
+    protected _isRunning: boolean = false;
+    
+    start(): void {
+        this._isRunning = true;
+    }
+}
+
+class Car extends Vehicle {
+    accelerate(amount: number): void {
+        if (!this._isRunning) {
+            console.log("Start the car first!");
+            return;
+        }
+        this._speed += amount;  // ✅ Can access protected _speed
+        console.log(`Speed: ${this._speed} mph`);
+    }
+}
+```
+
+### Protected Constructor:
+Prevent direct instantiation but allow inheritance:
+
+```typescript
+class Shape {
+    protected constructor(public color: string) {}
+}
+
+class Circle extends Shape {
+    constructor(color: string, public radius: number) {
+        super(color);  // ✅ OK - can call protected constructor
+    }
+}
+
+// const shape = new Shape("red");  // ❌ Error! Constructor is protected
+const circle = new Circle("blue", 5);  // ✅ OK
+```
+
+### Key Points:
+- `protected` members are accessible in the class and its subclasses
+- Child classes inherit `protected` members from parent
+- `protected` members are NOT accessible from external code
+- Use `protected` for internal implementation that subclasses need
+- Use `protected` constructors for abstract/base classes
+
+## Next Up: Lecture 78
+We'll cover abstract classes next, which cannot be instantiated directly and are meant to be extended.
 
 ## Configuration
 

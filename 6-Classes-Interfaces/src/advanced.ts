@@ -1,5 +1,5 @@
 class User {
-    private _firstName = "";
+    protected _firstName = "";
     private _lastName = "";
 
     set firstName(vlaue: string) {
@@ -19,11 +19,36 @@ class User {
         return this._firstName + " " + this._lastName
     }
 
-
+ static eid = 'USER'
+ static greet(){
+    console.log("hello!")
+ }
 }
+
 
 const usama = new User()
 usama.firstName = "usama"
 usama.lastName = "el sharkawi"
 
+console.log(User.eid)
 console.log(usama.fullName);
+
+
+class Emplyee extends User{
+    constructor(public jobTitle:string){
+        super();
+    }
+
+    work(){
+        console.log(`${this._firstName} doing his work now`)
+    }
+
+}
+
+
+const mohsen = new Emplyee("بتاع بكارى")
+mohsen.firstName = "mohsen"
+
+mohsen.work()
+
+
