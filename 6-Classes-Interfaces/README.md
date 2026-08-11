@@ -826,8 +826,151 @@ class Bird extends Animal implements Flyable {
 - **Abstract Class**: "Here's some code you can use, plus some methods you must implement"
 - **Interface**: "Here's what you must have (structure only, no code)"
 
-## Next Up: Lecture 79
-We'll introduce interfaces next and learn how to create and use them in TypeScript.
+## Lecture 79: Introducing Interfaces
+Interfaces define contracts or blueprints for objects - specifying what properties and methods an object should have, without providing any implementation.
+
+```typescript
+// Define an interface
+interface Person {
+    name: string;
+    age: number;
+}
+
+// Use the interface - TypeScript checks compliance
+const person1: Person = {
+    name: "Alice",
+    age: 30
+};
+
+// ✅ Valid - has all required properties
+const person2: Person = {
+    name: "Bob",
+    age: 25
+};
+
+// ❌ Error - missing required property
+// const person3: Person = {
+//     name: "Charlie"
+//     // Error: Property 'age' is missing
+// };
+```
+
+### Why Use Interfaces?
+
+#### 1. Type Safety for Objects
+```typescript
+interface Product {
+    id: string;
+    name: string;
+    price: number;
+}
+
+const product: Product = {
+    id: "P001",
+    name: "Laptop",
+    price: 999
+};
+
+// ❌ Error - missing 'price'
+// const badProduct: Product = {
+//     id: "P002",
+//     name: "Mouse"
+// };
+```
+
+#### 2. Function Parameters
+```typescript
+interface User {
+    name: string;
+    age: number;
+}
+
+function greetUser(user: User) {
+    return `Hello ${user.name}, you are ${user.age} years old`;
+}
+
+greetUser({ name: "Alice", age: 30 });  // ✅ OK
+
+// ❌ Error - wrong structure
+// greetUser({ name: "Bob" });  // Missing 'age'
+```
+
+### Optional Properties:
+Use `?` to make properties optional:
+
+```typescript
+interface User {
+    name: string;           // Required
+    age: number;            // Required
+    email?: string;         // Optional
+    phone?: string;         // Optional
+}
+
+const user1: User = {
+    name: "Alice",
+    age: 30
+};
+
+const user2: User = {
+    name: "Bob",
+    age: 25,
+    email: "bob@example.com"
+};
+```
+
+### Readonly Properties:
+```typescript
+interface User {
+    readonly id: string;    // Cannot be modified
+    name: string;
+    age: number;
+}
+
+const user: User = {
+    id: "USER-001",
+    name: "Alice",
+    age: 30
+};
+
+// ❌ Error - readonly property cannot be changed
+// user.id = "USER-002";  // Error!
+```
+
+### Extending Interfaces:
+```typescript
+// Base interface
+interface Person {
+    name: string;
+    age: number;
+}
+
+// Extended interface - includes everything from Person PLUS email
+interface Employee extends Person {
+    employeeId: string;
+    department: string;
+    email: string;
+}
+
+const employee: Employee = {
+    name: "Alice",
+    age: 30,
+    employeeId: "EMP-001",
+    department: "Engineering",
+    email: "alice@company.com"
+};
+```
+
+### Key Points:
+- **Interfaces define contracts** - specify what properties/methods an object must have
+- **No implementation** - interfaces only define structure, no code
+- **Cannot be instantiated** - use them to type-check objects, not create them
+- **Optional properties** - use `?` for properties that may not exist
+- **Readonly properties** - use `readonly` for properties that cannot be changed
+- **Extending interfaces** - use `extends` to build on existing interfaces
+- **Compile-time only** - interfaces are removed from JavaScript output
+
+## Next Up: Lecture 80
+We'll create our first practical interface example and learn more about interface usage patterns.
 
 ## Configuration
 
