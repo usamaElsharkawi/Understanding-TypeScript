@@ -684,8 +684,150 @@ const circle = new Circle("blue", 5);  // ✅ OK
 - Use `protected` for internal implementation that subclasses need
 - Use `protected` constructors for abstract/base classes
 
-## Next Up: Lecture 78
-We'll cover abstract classes next, which cannot be instantiated directly and are meant to be extended.
+## Lecture 78: Making Sense Of Abstract Classes
+Abstract classes are special classes that **cannot be instantiated directly** - they're meant to be extended by other classes. They can have both abstract methods (no implementation) and concrete methods (with implementation).
+
+```typescript
+abstract class Vehicle {
+    public color: string;
+    
+    constructor(color: string) {
+        this.color = color;
+    }
+    
+    // Abstract method - MUST be implemented by child classes
+    abstract start(): void;
+    abstract stop(): void;
+    
+    // Concrete method - HAS implementation, CAN be overridden
+    getFuelType(): string {
+        return "Gasoline";
+    }
+    
+    // Concrete method - CAN be overridden
+    honk(): void {
+        console.log("Beep beep!");
+    }
+}
+
+class Car extends Vehicle {
+    start(): void {
+        console.log("Starting car with key...");
+    }
+    
+    stop(): void {
+        console.log("Stopping car with brakes...");
+    }
+    
+    getFuelType(): string {
+        return "Electric";  // Override parent's "Gasoline"
+    }
+    
+    honk(): void {
+        console.log("Honk honk! 🚗");  // Override parent's "Beep beep!"
+    }
+}
+
+// ❌ CANNOT instantiate abstract class
+// const vehicle = new Vehicle("blue");  // Error!
+
+const car = new Car("red");  // ✅ OK - Car is not abstract
+car.start();  // "Starting car with key..."
+```
+
+### Key Points:
+- **`abstract` class** - Cannot be instantiated directly
+- **`abstract` method** - Has no implementation, MUST be overridden
+- **Concrete method** - Has implementation, CAN be overridden
+- Child classes **MUST** implement all abstract methods
+- Child classes use `extends` to inherit from abstract class
+
+### Real-World Example:
+```typescript
+abstract class PaymentProcessor {
+    amount: number;
+    
+    constructor(amount: number) {
+        this.amount = amount;
+    }
+    
+    abstract processPayment(): boolean;
+    abstract refund(transactionId: string): boolean;
+    
+    validateAmount(): boolean {
+        if (this.amount <= 0) throw new Error("Invalid amount");
+        return true;
+    }
+}
+
+class CreditCardProcessor extends PaymentProcessor {
+    processPayment(): boolean {
+        console.log(`Processing credit card payment of $${this.amount}`);
+        return true;
+    }
+    
+    refund(transactionId: string): boolean {
+        console.log(`Refunding transaction ${transactionId}`);
+        return true;
+    }
+}
+
+class PayPalProcessor extends PaymentProcessor {
+    processPayment(): boolean {
+        console.log(`Processing PayPal payment of $${this.amount}`);
+        return true;
+    }
+    
+    refund(transactionId: string): boolean {
+        console.log(`Refunding PayPal transaction ${transactionId}`);
+        return true;
+    }
+}
+```
+
+## Abstract Classes vs Interfaces
+
+### Key Differences:
+
+| Feature | Abstract Class | Interface |
+|---------|---------------|-----------|
+| **Implementation** | ✅ Can have concrete methods (actual code) | ❌ Only defines structure (method signatures) |
+| **Properties** | ✅ Can declare and initialize properties | ❌ Only declares property types (no initialization) |
+| **Inheritance** | Single inheritance (`extends` one class) | Multiple interfaces can be implemented (`implements A, B, C`) |
+| **When to Use** | Partial implementation + contract | Contract/structure only |
+| **Instantiation** | ❌ Cannot be instantiated | ❌ Cannot be instantiated |
+
+### Quick Comparison:
+
+```typescript
+// Abstract Class - provides partial implementation
+abstract class Animal {
+    sleep() {  // ✅ Has actual code
+        console.log("Sleeping...");
+    }
+    
+    abstract makeSound(): void;  // Must be implemented
+}
+
+// Interface - only defines structure
+interface Flyable {
+    fly(): void;  // Only signature, no code
+}
+
+// Class extends ONE abstract class, implements MULTIPLE interfaces
+class Bird extends Animal implements Flyable {
+    makeSound() { console.log("Chirp!"); }
+    fly() { console.log("Flying..."); }
+    // Inherits sleep() from Animal
+}
+```
+
+### Summary:
+- **Abstract Class**: "Here's some code you can use, plus some methods you must implement"
+- **Interface**: "Here's what you must have (structure only, no code)"
+
+## Next Up: Lecture 79
+We'll introduce interfaces next and learn how to create and use them in TypeScript.
 
 ## Configuration
 
