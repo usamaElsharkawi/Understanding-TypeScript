@@ -9,6 +9,7 @@
 - **72**: Making Fields "readonly"
 - **73**: Understanding Getters
 - **74**: Setting Values with Setters
+- **75**: Exploring Static Properties & Methods
 
 ## Lecture 67: Module Introduction
 Welcome to the Classes & Interfaces section! This part of the course focuses on object-oriented programming in TypeScript. Classes are fundamental building blocks that allow you to bundle data and functionality together, making your code more organized and maintainable.
@@ -296,8 +297,119 @@ console.log(circle.area);  // 314.16 (automatically recalculated)
 // circle.area = 100;      // ❌ Error - no setter for computed property
 ```
 
-## Next Up: Lecture 75
-We'll cover static properties and methods next, which belong to the class itself rather than to instances of the class.
+## Lecture 75: Exploring Static Properties & Methods
+Static members belong to the **class itself** rather than to individual instances. They're shared across all instances of the class.
+
+```typescript
+class User {
+    // Static property - belongs to the CLASS (shared by all instances)
+    static totalUsers: number = 0;
+    
+    // Instance property - belongs to EACH object
+    name: string;
+    
+    constructor(name: string) {
+        this.name = name;
+        User.totalUsers++;  // Access static property through class name
+    }
+}
+
+const user1 = new User("Alice");
+const user2 = new User("Bob");
+
+// Access static property through the CLASS (not instance)
+console.log(User.totalUsers);  // 2 - tracks ALL users
+
+// ❌ This won't work - static properties don't belong to instances
+// console.log(user1.totalUsers);  // Error!
+```
+
+### Static Methods:
+```typescript
+class MathHelper {
+    // Static method - can be called without creating an instance
+    static add(a: number, b: number): number {
+        return a + b;
+    }
+    
+    static celsiusToFahrenheit(celsius: number): number {
+        return (celsius * 9/5) + 32;
+    }
+    
+    // Instance method - needs an instance to call
+    multiply(a: number): number {
+        return a * 2;
+    }
+}
+
+// ✅ Call static methods directly on the class
+console.log(MathHelper.add(5, 3));  // 8
+console.log(MathHelper.celsiusToFahrenheit(25));  // 77
+
+// ❌ Can't call instance method without instance
+// MathHelper.multiply(5);  // Error!
+
+// ✅ Must create instance for instance methods
+const helper = new MathHelper();
+console.log(helper.multiply(5));  // 10
+```
+
+### Real-World Example - Counter:
+```typescript
+class Employee {
+    static employeeCount: number = 0;
+    
+    public id: string;
+    public name: string;
+    
+    constructor(name: string) {
+        this.id = `EMP-${Date.now()}`;
+        this.name = name;
+        Employee.employeeCount++;
+    }
+}
+
+const emp1 = new Employee("Alice");
+const emp2 = new Employee("Bob");
+const emp3 = new Employee("Charlie");
+
+console.log(Employee.employeeCount);  // 3 - company-wide count
+```
+
+### Utility Functions (Static Methods):
+```typescript
+class StringUtils {
+    static capitalize(str: string): string {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    
+    static reverse(str: string): string {
+        return str.split('').reverse().join('');
+    }
+}
+
+// Use directly without creating object
+console.log(StringUtils.capitalize("hello"));  // "Hello"
+console.log(StringUtils.reverse("hello"));     // "olleh"
+```
+
+### Key Points:
+- **Static properties/methods** belong to the class itself, not instances
+- Access them via `ClassName.property` or `ClassName.method()`
+- Cannot access instance properties/methods from static methods (no `this`)
+- Use for: counters, utility functions, constants, configuration
+- All instances share the same static property (one copy total)
+
+### Static vs Instance:
+| Feature | Static | Instance |
+|---------|--------|----------|
+| **Access via** | `ClassName.member` | `instance.member` |
+| **Memory** | One shared copy | Separate copy per instance |
+| **Use case** | Utilities, counters, config | Object-specific data |
+| **Can access** | Other static members | Both static and instance |
+
+## Next Up: Lecture 76
+We'll cover inheritance next, which allows classes to inherit properties and methods from other classes.
 
 ## Configuration
 
