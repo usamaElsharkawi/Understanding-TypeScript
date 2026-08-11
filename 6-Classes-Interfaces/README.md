@@ -1074,8 +1074,161 @@ if (myCar.start) {
 - Use **interfaces** for object shapes
 - Use **type aliases** for unions, primitives, tuples, or complex types
 
-## Next Up: Lecture 82
-We'll explore interfaces vs type aliases in more detail and learn about declaration merging.
+## Lecture 82: Interfaces vs Type Aliases & Understanding Declaration Merging
+This lecture dives deeper into the differences between interfaces and type aliases, with a focus on declaration merging - a unique feature of interfaces.
+
+### Declaration Merging in Depth:
+This is a powerful feature that allows you to split interface definitions across multiple files or declarations:
+
+```typescript
+// First declaration
+interface User {
+    name: string;
+    age: number;
+}
+
+// Second declaration - MERGES with first!
+interface User {
+    email: string;
+    isActive: boolean;
+}
+
+// Result: User now has ALL properties
+const user: User = {
+    name: "Alice",
+    age: 30,
+    email: "alice@example.com",
+    isActive: true
+};
+
+// Type aliases CANNOT do this:
+// type User = { name: string };
+// type User = { age: number };  // ❌ Error!
+```
+
+### When to Use Which?
+| Use Case | Interface | Type Alias |
+|----------|-----------|------------|
+| **Object shapes** | ✅ Preferred | ✅ Works |
+| **May need to extend later** | ✅ Perfect (merging) | ❌ Use `&` intersection |
+| **Library augmentation** | ✅ Yes | ❌ No |
+| **Union types** | ❌ No | ✅ Yes |
+| **Primitive types** | ❌ No | ✅ Yes |
+| **Tuples** | ❌ No | ✅ Yes |
+
+**Recommendation:**
+- **Default to interfaces** for object shapes (allows merging)
+- **Use type aliases** for unions, primitives, tuples, or when you need more flexibility
+
+## Lecture 83: Using Interfaces To Define Function Types
+Interfaces can also define function signatures - specifying what a function should look like (parameters and return type) without implementing it.
+
+### Basic Function Interface:
+```typescript
+// Define a function type using interface
+interface AddFunction {
+    (a: number, b: number): number;
+}
+
+// Use it to type a variable
+const add: AddFunction = (a, b) => {
+    return a + b;
+};
+
+console.log(add(5, 3));  // 8
+```
+
+### Multiple Function Signatures (Overloads):
+```typescript
+interface StringFormat {
+    // Overload 1: single argument
+    (str: string): string;
+    
+    // Overload 2: two arguments
+    (str: string, uppercase: boolean): string;
+    
+    // Overload 3: three arguments
+    (str: string, uppercase: boolean, prefix: string): string;
+}
+
+const format: StringFormat = (str: string, uppercase?: boolean, prefix?: string) => {
+    let result = str;
+    
+    if (uppercase) {
+        result = result.toUpperCase();
+    }
+    
+    if (prefix) {
+        result = prefix + result;
+    }
+    
+    return result;
+};
+
+// TypeScript picks the right overload
+console.log(format("hello"));              // "hello"
+console.log(format("hello", true));        // "HELLO"
+console.log(format("hello", true, ">> ")); // ">> HELLO"
+```
+
+### Function Interfaces in Objects:
+```typescript
+interface Calculator {
+    // Property that's a function
+    add: (a: number, b: number) => number;
+    
+    // Method syntax (same as above)
+    subtract(a: number, b: number): number;
+    
+    // Optional method
+    multiply?(a: number, b: number): number;
+}
+
+const calc: Calculator = {
+    add: (a, b) => a + b,
+    subtract(a, b) {
+        return a - b;
+    }
+};
+
+console.log(calc.add(5, 3));       // 8
+console.log(calc.subtract(5, 3));  // 2
+```
+
+### Real-World Example: API Client
+```typescript
+interface ApiClient {
+    get: (url: string) => Promise<any>;
+    post: (url: string, data: any) => Promise<any>;
+    put: (url: string, data: any) => Promise<any>;
+    delete: (url: string) => Promise<any>;
+}
+
+const api: ApiClient = {
+    get: (url) => fetch(url).then(res => res.json()),
+    post: (url, data) => fetch(url, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }).then(res => res.json()),
+    put: (url, data) => fetch(url, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }).then(res => res.json()),
+    delete: (url) => fetch(url, {
+        method: 'DELETE'
+    }).then(res => res.json())
+};
+```
+
+### Key Points:
+- **Interfaces can define function signatures** using the `(params): returnType` syntax
+- **Type aliases** can also define function types: `type Add = (a: number, b: number) => number`
+- **Function interfaces** are useful for callbacks, API clients, and higher-order functions
+- **Multiple overloads** can be defined in interfaces
+- **Choose based on needs**: Use interfaces for object shapes (allows merging), use type aliases for complex types (unions, primitives, tuples)
+
+## Next Up: Lecture 84
+We'll learn how to implement interfaces with classes using the `implements` keyword.
 
 This section uses TypeScript with:
 - ES6+ target for modern syntax support
