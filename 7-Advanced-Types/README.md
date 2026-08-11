@@ -198,3 +198,73 @@ Type guards don't just **check conditions at runtime** — they also **communica
 | `"prop" in x` | ✅ Object types via property presence |
 | `Array.isArray(x)` | ✅ Arrays vs. non-arrays |
 | `x === "literal"` | ✅ String/number literal union members |
+
+## Lecture 91: Discriminated Unions
+
+A **discriminated union** (also called a "tagged union") is a union type where each member has a **common property** (the discriminant) with a **distinct literal type** as its value. This lets TypeScript **automatically narrow** the union.
+
+### Structure & Syntax
+```typescript
+type LoadingState = { kind: "loading" };
+type ErrorState = { kind: "error"; message: string };
+type SuccessState = { kind: "success"; data: string };
+
+type NetworkCard = LoadingState | ErrorState | SuccessState;
+```
+
+### Narrowing with a Switch Statement
+```typescript
+function renderCard(card: NetworkCard) {
+  switch (card.kind) {
+    case "loading":
+      return "Loading..."; // ✅ TypeScript knows: LoadingState
+    case "error":
+      return `Error: ${card.message}`; // ✅ TypeScript knows: ErrorState
+    case "success":
+      return `Data: ${card.data}`; // ✅ TypeScript knows: SuccessState
+  }
+}
+```
+
+### Requirements for Discriminated Unions
+
+1. **Same property name** across all union members (e.g., `kind`)
+2. **Literal types** for the discriminant values (`"loading"`, `"error"`, `"success"`), **not** `string`
+3. **Switch** or **if-else** that checks the discriminant property
+
+### Real-World Example — Shape
+```typescript
+type Circle = { kind: "circle"; radius: number };
+type Rectangle = { kind: "rectangle"; width: number; height: number };
+type Square = { kind: "square"; size: number };
+type Shape = Circle | Rectangle | Square;
+
+function getArea(shape: Shape) {
+  if (shape.kind === "circle") {
+    return Math.PI * shape.radius ** 2; // ✅ Circle
+  } else if (shape.kind === "rectangle") {
+    return shape.width * shape.height; // ✅ Rectangle
+  } else {
+    return shape.size ** 2; // ✅ Square (TypeScript knows it's the only remaining case)
+  }
+}
+```
+
+### Benefits
+- **Type safety** — TypeScript narrows correctly in each branch
+- **Error prevention** — TypeScript can warn if you forget a case
+- **Autocomplete** — Only relevant properties appear within each branch
+- **No manual type assertions** — the narrowing is automatic
+
+### Discriminated Unions vs. Type Guards (`in` operator)
+| Feature | Discriminated Union | `in` Operator |
+|---------|-------------------|---------------|
+| Discriminant | Common property (e.g., `kind`) | Any property existence check |
+| Literal values required | ✅ Yes | ❌ No |
+| TypeScript narrowing | ✅ Automatic via switch/if-else | ✅ Automatic via `in` |
+| Declaration merging | ❌ Not applicable | ❌ Not applicable |
+
+### Code Demo (in `src/discriminated.ts`)
+We implemented two examples:
+1. **`NetworkCard`** — loading / error / success states with a switch statement
+2. **`Shape`** — circle / rectangle / square with an if-else chain
