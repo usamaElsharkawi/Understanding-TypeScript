@@ -969,10 +969,113 @@ const employee: Employee = {
 - **Extending interfaces** - use `extends` to build on existing interfaces
 - **Compile-time only** - interfaces are removed from JavaScript output
 
-## Next Up: Lecture 80
-We'll create our first practical interface example and learn more about interface usage patterns.
+## Lecture 81: Interfaces As Object Types
+Interfaces can be used interchangeably with object type annotations. In fact, interfaces are often preferable to type aliases for defining object shapes because of features like declaration merging.
 
-## Configuration
+### Interfaces vs Type Aliases for Objects:
+```typescript
+// Using an INTERFACE
+interface User {
+    name: string;
+    age: number;
+}
+
+// Using a TYPE ALIAS
+type UserType = {
+    name: string;
+    age: number;
+};
+
+// Both work the same way for object typing
+const user1: User = { name: "Alice", age: 30 };
+const user2: UserType = { name: "Bob", age: 25 };
+```
+
+### Declaration Merging (Unique to Interfaces!)
+This is a killer feature - interfaces can be merged:
+
+```typescript
+// First declaration
+interface User {
+    name: string;
+    age: number;
+}
+
+// Second declaration - MERGES with first!
+interface User {
+    email: string;
+    isActive: boolean;
+}
+
+// Result: User now has ALL properties
+const user: User = {
+    name: "Alice",
+    age: 30,
+    email: "alice@example.com",
+    isActive: true
+};
+
+// Type aliases CANNOT do this:
+// type User = { name: string };
+// type User = { age: number };  // ❌ Error!
+```
+
+### Interfaces with Methods:
+```typescript
+interface Animal {
+    name: string;
+    makeSound(): void;
+    eat(food: string): void;
+}
+
+const dog: Animal = {
+    name: "Max",
+    makeSound(): void {
+        console.log("Woof!");
+    },
+    eat(food: string): void {
+        console.log(`${this.name} is eating ${food}`);
+    }
+};
+```
+
+### Interfaces with Optional and Readonly:
+```typescript
+interface Car {
+    readonly make: string;
+    readonly model: string;
+    year: number;
+    color?: string;
+    features?: string[];
+    start?(): void;
+}
+
+const myCar: Car = {
+    make: "Toyota",
+    model: "Camry",
+    year: 2023
+};
+
+if (myCar.start) {
+    myCar.start();
+}
+```
+
+### When to Use Interfaces vs Type Aliases:
+| Feature | Interface | Type Alias |
+|---------|-----------|------------|
+| Declaration merging | ✅ Yes | ❌ No |
+| Extends other interfaces | ✅ Yes | ✅ Yes |
+| Class implementation | ✅ Yes | ✅ Yes |
+| Union types | ❌ No | ✅ Yes |
+| Primitive types | ❌ No | ✅ Yes |
+
+**Rule of thumb:**
+- Use **interfaces** for object shapes
+- Use **type aliases** for unions, primitives, tuples, or complex types
+
+## Next Up: Lecture 82
+We'll explore interfaces vs type aliases in more detail and learn about declaration merging.
 
 This section uses TypeScript with:
 - ES6+ target for modern syntax support
