@@ -1374,8 +1374,212 @@ class PayPalProcessor implements PaymentProcessor {
 - **No runtime effect** - `implements` is removed in compiled JS
 - **Use for polymorphism** - Different classes can implement same interface
 
-## Next Up: Lecture 85
-We'll learn how to use interfaces to ensure base types and create flexible, type-safe code.
+## Lecture 85: Ensuring Base Types with Interfaces
+Interfaces ensure that different classes share a common structure, allowing you to write code that works with any class that implements the interface.
+
+```typescript
+// Define a base interface
+interface DatabaseConnection {
+    connect(): void;
+    disconnect(): void;
+    query(sql: string): any;
+}
+
+// Multiple classes implement the same interface
+class MySQLConnection implements DatabaseConnection {
+    connect(): void { console.log("Connecting to MySQL..."); }
+    disconnect(): void { console.log("Disconnecting MySQL..."); }
+    query(sql: string): any { console.log(`MySQL: ${sql}`); }
+}
+
+class PostgreSQLConnection implements DatabaseConnection {
+    connect(): void { console.log("Connecting to PostgreSQL..."); }
+    disconnect(): void { console.log("Disconnecting PostgreSQL..."); }
+    query(sql: string): any { console.log(`PostgreSQL: ${sql}`); }
+}
+
+// Function works with ANY DatabaseConnection implementation
+function executeQuery(conn: DatabaseConnection, sql: string) {
+    conn.connect();
+    conn.query(sql);
+    conn.disconnect();
+}
+
+// All three work with the same function!
+executeQuery(new MySQLConnection(), "SELECT * FROM users");
+executeQuery(new PostgreSQLConnection(), "SELECT * FROM products");
+```
+
+### Key Benefits:
+- **Polymorphism** - Write code that works with multiple types
+- **Type Safety** - TypeScript ensures all implementations match
+- **Flexibility** - Easy to swap implementations
+- **Testing** - Can create mock implementations for testing
+
+## Lecture 86: Extending Interfaces
+Interfaces can extend other interfaces to build more specific types from general ones.
+
+```typescript
+// Base interface (general)
+interface Person {
+    name: string;
+    age: number;
+}
+
+// Extended interface (more specific)
+interface Employee extends Person {
+    employeeId: string;
+    department: string;
+    salary: number;
+}
+
+const employee: Employee = {
+    name: "Alice",
+    age: 30,
+    employeeId: "EMP-001",
+    department: "Engineering",
+    salary: 75000
+};
+```
+
+### Extending Multiple Interfaces:
+```typescript
+interface Timestamped {
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+interface Identifiable {
+    id: string;
+}
+
+// Extend multiple interfaces
+interface User extends Identifiable, Timestamped {
+    name: string;
+    email: string;
+}
+```
+
+### Multiple Levels of Extension:
+```typescript
+interface Vehicle {
+    make: string;
+    model: string;
+}
+
+interface Car extends Vehicle {
+    doors: number;
+}
+
+interface ElectricCar extends Car {
+    batteryCapacity: number;
+    range: number;
+}
+
+// ElectricCar has ALL properties from all levels
+const tesla: ElectricCar = {
+    make: "Tesla",
+    model: "Model 3",
+    doors: 4,
+    batteryCapacity: 75,
+    range: 350
+};
+```
+
+## Lecture 87: How Interfaces Get (Not) Compiled To JavaScript
+**Interfaces are COMPILE-TIME ONLY constructs.** They are completely removed during compilation and have zero runtime presence.
+
+```typescript
+// TypeScript source code
+interface User {
+    name: string;
+    age: number;
+}
+
+class UserImpl implements User {
+    name: string;
+    age: number;
+    
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+}
+```
+
+**Compiles to JavaScript:**
+```javascript
+// ❌ NO interface User { } - it's GONE!
+// ❌ NO implements User - it's GONE!
+
+class UserImpl {
+    constructor(name, age) {
+        this.name = name;
+        this.age = age;
+    }
+}
+```
+
+### What Happens to TypeScript Features:
+
+| TypeScript Feature | Compiled JavaScript | Runtime Effect |
+|-------------------|---------------------|----------------|
+| **Interfaces** | ❌ Completely removed | ❌ None |
+| **Type aliases** | ❌ Completely removed | ❌ None |
+| **Access modifiers** | ❌ Removed | ❌ None |
+| **readonly** | ❌ Removed | ❌ None |
+| **abstract** | ❌ Removed | ❌ None |
+| **implements** | ❌ Removed | ❌ None |
+| **Classes** | ✅ Compiled to JS | ✅ Works |
+
+### Why This Matters:
+1. **No Runtime Overhead** - Interfaces add zero performance cost
+2. **Development Tool Only** - Interfaces exist only to help developers
+3. **Type Safety** - Errors caught at compile time, not runtime
+4. **JavaScript Compatibility** - Output runs on any JS engine
+
+### Important Note:
+Interfaces CANNOT be checked at runtime. If you need runtime validation, use type guards:
+
+```typescript
+interface User {
+    name: string;
+    age: number;
+}
+
+function isUser(obj: any): obj is User {
+    return (
+        typeof obj.name === 'string' &&
+        typeof obj.age === 'number'
+    );
+}
+```
+
+## Summary: All Interface Lectures (79-87)
+
+| Lecture | Topic | Key Takeaway |
+|---------|-------|--------------|
+| **79** | Introducing Interfaces | Define contracts without implementation |
+| **81** | Interfaces As Object Types | Interfaces vs type aliases, declaration merging |
+| **82** | Interfaces vs Type Aliases | When to use which, merging benefits |
+| **83** | Function Interfaces | Define function signatures with interfaces |
+| **84** | Implementing Interfaces | Use `implements` to enforce contracts in classes |
+| **85** | Ensuring Base Types | Polymorphism through interface implementations |
+| **86** | Extending Interfaces | Build specialized interfaces from general ones |
+| **87** | Compilation | Interfaces are compile-time only, removed from JS |
+
+## Configuration
+
+This section uses TypeScript with:
+- ES6+ target for modern syntax support
+- Strict mode enabled for type safety
+- CommonJS modules
+
+## Files
+
+- `basics.ts` - Basic class examples
+- `tsconfig.json` - TypeScript configuration
+- `README.md` - Documentation
 
 This section uses TypeScript with:
 - ES6+ target for modern syntax support
