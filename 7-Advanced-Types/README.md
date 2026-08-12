@@ -692,3 +692,129 @@ We implemented:
 3. **`DIRECTIONS` constant** — using `typeof` + `keyof` to derive a union type
 4. **`move()` function** — exhaustive switch over the derived union
 5. **`getConfig()` function** — returning an `as const` object for literal return types
+
+## Lecture 98: Revisiting the `Record` Type
+
+**`Record<K, T>`** is a TypeScript utility type that constructs an object type with keys of type `K` and values of type `T` — essentially a typed key-value mapping.
+
+### Syntax
+```typescript
+type Record<K extends keyof any, T> = {
+  [P in K]: T;
+};
+```
+
+### Basic Usage
+
+Instead of manually listing all keys:
+```typescript
+type UserRoles = {
+  admin: string;
+  editor: string;
+  viewer: string;
+};
+```
+
+Use `Record`:
+```typescript
+type Role = "admin" | "editor" | "viewer";
+type UserRoles = Record<Role, string>;
+// Same as above, but cleaner and type-safe
+```
+
+### Real-World Example — User Permissions
+
+```typescript
+type Role = "admin" | "editor" | "viewer";
+
+const roleDescriptions: Record<Role, string> = {
+  admin: "Full access to all resources",
+  editor: "Can create, edit, and delete content",
+  viewer: "Read-only access",
+};
+
+const rolePermissions: Record<Role, string[]> = {
+  admin: ["create", "read", "update", "delete"],
+  editor: ["create", "read", "update"],
+  viewer: ["read"],
+};
+```
+
+### Type Safety Benefits
+
+1. **Enforces all keys exist**:
+```typescript
+const incomplete: Record<Role, string> = {
+  admin: "Full access",
+  editor: "Can edit",
+}; // ❌ Error: Property 'viewer' is missing
+```
+
+2. **Prevents excess properties**:
+```typescript
+const extra: Record<Role, string> = {
+  admin: "Full access",
+  editor: "Can edit",
+  viewer: "Read only",
+  supervisor: "Extra", // ❌ Error: 'supervisor' is not assignable to type 'Role'
+};
+```
+
+3. **Key autocomplete** in your IDE
+
+### Combining with Other Types
+
+#### With enums:
+```typescript
+enum Permission {
+  Read = "READ",
+  Write = "WRITE",
+  Delete = "DELETE",
+}
+
+const permissionLabels: Record<Permission, string> = {
+  [Permission.Read]: "Can read documents",
+  [Permission.Write]: "Can create and edit documents",
+  [Permission.Delete]: "Can delete documents",
+};
+```
+
+#### Dynamic Record creation with generics:
+```typescript
+function createRoleMap<T>(roles: string[], defaultValue: T): Record<string, T> {
+  const result: Record<string, T> = {};
+  for (const role of roles) {
+    result[role] = defaultValue;
+  }
+  return result;
+}
+
+const dynamicMap = createRoleMap(["admin", "editor", "viewer"], "default");
+// type: Record<string, string>
+```
+
+### `Record` vs. Plain Object Types
+
+| Feature | `Record<Role, string>` | `{ [key: string]: string }` |
+|---------|------------------------|---------------------------|
+| Known keys only | ✅ Yes | ❌ No — any string key |
+| Excess property checks | ✅ Yes | ❌ No |
+| Missing key errors | ✅ Yes | ❌ No |
+| Key autocomplete | ✅ Yes | ✅ Partial |
+| Type safety | ✅ Higher | ❌ Lower |
+
+### Key Takeaways
+1. **`Record<K, T>`** creates an object type with keys `K` and values `T`
+2. **Enforces all keys exist** — great for configuration objects
+3. **Prevents excess properties** — only allowed keys can be added
+4. **Great with string literal unions** — enables autocomplete and exhaustiveness
+5. **Works with enums, generics, and `as const`**
+6. **Part of TypeScript's utility types** (alongside `Partial`, `Readonly`, `Pick`, `Omit`, etc.)
+
+### Code Demo (in `src/record.ts`)
+We implemented:
+1. **`roleDescriptions`** — `Record<Role, string>` mapping roles to descriptions
+2. **`rolePermissions`** — `Record<Role, string[]>` mapping roles to permission arrays
+3. **Type safety comments** — showing missing key and excess property errors
+4. **Enum-based `Record`** — `permissionLabels` using `Record<Permission, string>`
+5. **Generic `createRoleMap()`** — dynamically building a `Record<string, T>`
