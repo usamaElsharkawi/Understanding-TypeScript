@@ -818,3 +818,112 @@ We implemented:
 3. **Type safety comments** — showing missing key and excess property errors
 4. **Enum-based `Record`** — `permissionLabels` using `Record<Permission, string>`
 5. **Generic `createRoleMap()`** — dynamically building a `Record<string, T>`
+
+## Lecture 99: The `satisfies` Keyword
+
+The **`satisfies`** keyword (TypeScript 4.9+) validates that an object matches a type constraint **without changing** the object's type. It's the perfect tool for configuration objects — you get type safety AND preserve literal types.
+
+### The Problem — `as` Loses Literal Types
+
+Without `satisfies`, you typically use `as` or direct annotation, both of which **widen** the type:
+
+```typescript
+type Permissions = Record<"admin" | "editor" | "viewer", string[]>;
+
+const permissions = {
+  admin: ["read", "write", "delete"],
+  editor: ["read", "write"],
+  viewer: ["read"],
+} as Permissions;
+
+// permissions["admin"] is: string[] — literal types are LOST!
+```
+
+### The Solution — `satisfies`
+
+```typescript
+const permissions = {
+  admin: ["read", "write", "delete"],
+  editor: ["read", "write"],
+  viewer: ["read"],
+} satisfies Permissions;
+
+// ✅ Type is validated (must match Record<Role, string[]>)
+// ✅ But the literal types are PRESERVED
+// permissions["admin"] still has the literal values in autocomplete
+```
+
+### How It Works
+
+1. **Type-checks** the object against the given type
+2. **Does NOT change** the object's type — keeps the narrow, literal types
+3. **Catches errors** — if the object doesn't match, you get a compile-time error
+
+### Real-World Example — Color Palette
+
+```typescript
+type Palette = {
+  primary: string;
+  secondary: string;
+  accent: string;
+};
+
+const palette = {
+  primary: "#007acc",
+  secondary: "#ff6b6b",
+  accent: "#ffd93d",
+} satisfies Palette;
+
+// palette["primary"] is still: "#007acc" (literal type preserved!)
+// vs. with `as Palette` — it would just be: string
+```
+
+### Error Detection
+
+`satisfies` catches structural errors at compile time:
+
+```typescript
+type Config = {
+  apiUrl: string;
+  timeout: number;
+  retries: number;
+};
+
+const config = {
+  apiUrl: "https://api.example.com",
+  timeout: 5000,
+  retries: 3,
+} satisfies Config;
+
+// Uncomment to see errors:
+// const badConfig = {
+//   apiUrl: "https://api.example.com",
+//   timeout: 5000,
+//   // ❌ Missing "retries" property
+//   extra: "oops", // ❌ Excess property
+// } satisfies Config;
+```
+
+### `satisfies` vs `as` — Key Difference
+
+| Feature | `as` | `satisfies` |
+|---------|------|-------------|
+| Type-checking | ❌ No — just asserts | ✅ Yes — validates |
+| Preserves literals | ❌ No — narrows to target | ✅ Yes — keeps original |
+| Catches errors | ❌ No | ✅ Yes |
+| Usage intent | "Trust me, it's this type" | "Check that it satisfies this type" |
+
+### Key Takeaways
+1. **`satisfies` validates** an object against a type constraint at compile time
+2. **Preserves the original type** — literal types and narrow values are kept
+3. **Catches errors** that `as` would silently ignore (missing keys, excess properties)
+4. **Perfect for configuration objects** — validate structure without losing precision
+5. **Introduced in TypeScript 4.9** — check your version with `tsc --version`
+6. **Complementary to** `Record`, `as const`, and index types
+
+### Code Demo (in `src/satisfies.ts`)
+We implemented:
+1. **Permission map** — comparing `as Permissions` vs `satisfies Permissions`
+2. **Color palette** — showing literal type preservation with `satisfies Palette`
+3. **Config validation** — demonstrating error detection with commented-out bad config
+4. **Runtime verification** — all values print correctly at runtime
