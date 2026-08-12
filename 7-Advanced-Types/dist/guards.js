@@ -5,11 +5,14 @@ const fileSource = {
     path: 'some/path/to/file.csv',
 };
 const dbSource = {
-    type: "file",
+    type: "db",
     connectionUrl: 'some-connection-url',
 };
+function isFile(source) {
+    return source.type === "file";
+}
 function loadData(source) {
-    if (source.type === 'file') {
+    if (isFile(source)) {
         //source.path >>>open the file
         return;
     }
@@ -30,13 +33,19 @@ class Admin {
         // ...
     }
 }
-const user = new User('Max');
-const admin = new Admin(['ban', 'restore']);
-function init(entity) {
-    if (entity instanceof User) {
-        entity.join();
-        return;
-    }
-    entity.scan();
+function isAdmin(entity) {
+    return entity instanceof Admin;
 }
+function init(entity) {
+    if (isAdmin(entity)) {
+        entity.scan(); // ✅ TypeScript narrows to Admin
+    }
+    else {
+        entity.join(); // ✅ TypeScript narrows to User
+    }
+}
+const user = new User("Max");
+const admin = new Admin(["ban", "restore"]);
+init(admin);
+init(user);
 //# sourceMappingURL=guards.js.map

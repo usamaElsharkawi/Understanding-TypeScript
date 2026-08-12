@@ -352,3 +352,102 @@ function makeSound(animal: Dog | Cat) {
 We implemented:
 1. **`User` / `Admin`** classes with different methods, narrowed via `instanceof`
 2. **`Animal` → `Dog` / `Cat`** hierarchy, demonstrating that inherited methods are still accessible after narrowing
+
+## Lecture 93: "Outsourcing" Type Guards & Using Type Predicates
+
+**Type predicates** let you write **custom, reusable type guard functions** that TypeScript can use to narrow types — this is the idea of "outsourcing" type guards.
+
+### The Problem — Repeated Type Checks
+
+If you need to narrow a type in multiple places, you repeat yourself:
+
+```typescript
+type Source = { type: "file"; path: string } | { type: "db"; connectionUrl: string };
+
+function loadData(source: Source) {
+  if (source.type === "file") { /* handle file */ }
+}
+
+function saveData(source: Source) {
+  if (source.type === "file") { /* handle file */ }
+}
+
+function deleteData(source: Source) {
+  if (source.type === "file") { /* handle file */ }
+}
+```
+
+### The Solution: Type Predicates (`is`)
+
+A **type predicate** has the syntax `paramName is Type`:
+
+```typescript
+function isFile(source: Source): source is FileSource {
+  return source.type === "file";
+}
+
+function loadData(source: Source) {
+  if (isFile(source)) {
+    console.log(source.path); // ✅ TypeScript narrows to FileSource
+  } else {
+    console.log(source.connectionUrl); // ✅ TypeScript narrows to DBSource
+  }
+}
+```
+
+### How It Works
+- **`source is FileSource`** tells TypeScript: "If this function returns `true`, the parameter is `FileSource`"
+- The function still returns a **runtime `boolean`** — the predicate is a **compile-time hint**
+- You can now use `isFile()` anywhere in your codebase
+
+### Type Predicate Syntax
+```typescript
+function guardName(param: UnionType): param is NarrowedType {
+  return /* runtime check */;
+}
+```
+
+### Combining with `instanceof`
+You can also create custom type guards for class-based unions:
+
+```typescript
+class User {
+  constructor(public name: string) {}
+  join() {}
+}
+
+class Admin {
+  constructor(public permissions: string[]) {}
+  scan() {}
+}
+
+type Entity = User | Admin;
+
+function isAdmin(entity: Entity): entity is Admin {
+  return entity instanceof Admin;
+}
+
+function init(entity: Entity) {
+  if (isAdmin(entity)) {
+    entity.scan(); // ✅ TypeScript narrows to Admin
+  } else {
+    entity.join(); // ✅ TypeScript narrows to User
+  }
+}
+```
+
+> **Note**: `isAdmin` uses `instanceof` as the runtime check, but returns a **type predicate** `entity is Admin` so TypeScript can narrow across function boundaries.
+
+### Key Takeaways
+1. **Outsource** your type-narrowing logic into reusable helper functions
+2. Use **`: paramName is Type`** as the return type — NOT `boolean`
+3. The predicate is a **compile-time hint** — the actual check still happens at runtime
+4. Works for **any** type narrowing: discriminants, `in`, `typeof`, `instanceof`, etc.
+5. Makes code cleaner and type narrowing **reusable and composable**
+
+### Code Demo (in `src/guards.ts`)
+We implemented:
+1. **`isFile()`** — a custom type guard with `: source is FileSource` predicate
+2. **`isAdmin()`** — a custom type guard wrapping `instanceof` as a reusable predicate
+3. **`loadData()`** — using the custom guard to narrow `FileSource | DBSource`
+4. **`init()`** — using `isAdmin()` to narrow `User | Admin`
