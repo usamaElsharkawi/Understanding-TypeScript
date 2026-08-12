@@ -365,3 +365,103 @@ We implemented:
 4. **`firstTwo<T>`** — inference with array types
 5. **`mapArray<T, U>`** — callback return type inference
 6. **`getPromise<T>`** — inference failure case, requiring explicit `<number>`
+
+## Lecture 105: Working with Multiple Generic Parameters
+
+Sometimes one type parameter isn't enough. When a function operates on **related values of different types**, you need **multiple type parameters** — `<A, B>` or `<T, U>`.
+
+### Basic Syntax
+
+Multiple type parameters are separated with commas:
+
+```typescript
+function pair<A, B>(first: A, second: B): [A, B] {
+  return [first, second];
+}
+
+const result = pair("hello", 42);
+// A = string, B = number → [string, number]
+```
+
+### Why Multiple Parameters Are Needed
+
+**With one parameter**, both arguments are forced to the SAME type:
+```typescript
+function merge<A>(obj1: A, obj2: A): A {
+  return { ...obj1, ...obj2 };
+}
+
+const merged = merge({ name: "usama" }, { age: 34 });
+// ❌ A can't be both { name } and { age } — TypeScript error!
+```
+
+**With two parameters**, each argument gets its own type:
+```typescript
+function merge<A, B>(objA: A, objB: B): A & B {
+  return { ...objA, ...objB };
+}
+
+const merged = merge({ name: "usama" }, { age: 34 });
+// A = { name: string }, B = { age: number }
+// Result: { name: string; age: number } (intersection!)
+```
+
+### Independence of Inference
+
+Each type parameter is inferred **independently** from its corresponding argument:
+
+```typescript
+function swap<A, B>(pair: [A, B]): [B, A] {
+  return [pair[1], pair[0]];
+}
+
+const swapped = swap([1, "two"]);
+// A = number (from 1), B = string (from "two")
+// Result: [string, number]
+```
+
+### Multiple Parameters Playing Different Roles
+
+```typescript
+function makeMap<K extends string, V>(key: K, value: V): Record<K, V> {
+  return { [key]: value } as Record<K, V>;
+}
+
+const map = makeMap("username", "usama");
+// K = "username" (literal), V = string
+// Result: Record<"username", string>
+```
+
+### Constraints on Each Parameter
+
+You can apply constraints independently:
+
+```typescript
+function mergeObjects<A extends object, B extends object>(objA: A, objB: B): A & B {
+  return { ...objA, ...objB };
+}
+
+mergeObjects({ id: 1 }, { role: "admin" }); // ✅ Both are objects
+mergeObjects({ name: "usama" }, 42);        // ❌ number does not extend object
+```
+
+### Common Use Cases
+- **Merging objects** — `merge<T, U>(a: T, b: U): T & U`
+- **Swapping tuple positions** — `swap<A, B>(([A, B])) => [B, A]`
+- **Key-value mapping** — `makeMap<K, V>(key: K, value: V): Record<K, V>`
+- **Type transformations** — combining related but distinct types
+
+### Key Takeaways
+1. **Multiple type parameters** are declared with commas: `<T, U>` or `<A, B>`
+2. **Each parameter is inferred independently** — from its corresponding argument
+3. **Needed when** arguments have different, unrelated types
+4. **The `merge` example is classic** — `merge<T, U>(a: T, b: U): T & U` returns an intersection
+5. **Constraints can apply to each** parameter independently
+6. **Enables flexible utilities** — merging, swapping, mapping between types
+
+### Code Demo (in `src/multiple-generics.ts`)
+We implemented:
+1. **`merge<A, B>`** — the classic object merger returning `A & B`
+2. **`swap<A, B>`** — tuple position swapping with independent inference
+3. **`makeMap<K, V>`** — key-value mapping with `Record<K, V>`
+4. **`mergeObjects<A, B>`** — both parameters constrained to `extends object`
