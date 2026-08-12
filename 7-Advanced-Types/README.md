@@ -451,3 +451,81 @@ We implemented:
 2. **`isAdmin()`** — a custom type guard wrapping `instanceof` as a reusable predicate
 3. **`loadData()`** — using the custom guard to narrow `FileSource | DBSource`
 4. **`init()`** — using `isAdmin()` to narrow `User | Admin`
+
+## Lecture 94 & 95: Function Overloads
+
+**Function overloads** allow you to define **multiple signatures** for a single function — each with different parameter types and return types. The actual implementation is shared by all signatures.
+
+### The Problem — Loss of Type Safety
+
+Without overloads, a flexible function loses precise return types:
+
+```typescript
+// ❌ Without overloads — return type is always the union
+function combine(a: string | number, b: string | number): string | number {
+  if (typeof a === "string" && typeof b === "string") {
+    return a + b;
+  }
+  return Number(a) + Number(b);
+}
+
+const result = combine("Hello", "World"); // Type is string | number — not just string!
+```
+
+TypeScript can't tell that `combine("Hello", "World")` always returns a `string`.
+
+### The Solution — Multiple Signatures
+
+```typescript
+// Overload signatures — what callers see:
+function combine(a: string, b: string): string;
+function combine(a: number, b: number): number;
+
+// Implementation signature — hidden from callers:
+function combine(a: string | number, b: string | number): string | number {
+  if (typeof a === "string" && typeof b === "string") {
+    return a + b; // string concatenation
+  }
+  return Number(a) + Number(b); // numeric addition
+}
+
+// ✅ Correct return types based on arguments
+const strResult = combine("Hello", "World"); // Type: string ✅
+const numResult = combine(10, 20);           // Type: number ✅
+// combine("Hello", 5); // ❌ Error: No matching overload
+```
+
+### Rules & Structure
+
+1. **Multiple overload signatures** — each defines a valid call signature
+2. **One implementation signature** — the actual logic (hidden from callers)
+3. **Implementation must be compatible** with ALL overload signatures
+4. **Overload signatures must come before** the implementation
+
+### Real-World Example — Flexible Getter
+
+```typescript
+function get<T>(obj: T[], index: number): T;
+function get<T>(obj: Record<string, T>, key: string): T;
+function get<T>(obj: T[] | Record<string, T>, key: string | number): T {
+  return obj[key as keyof typeof obj] as T;
+}
+
+const scores = [98, 87, 92];
+const firstScore = get(scores, 0); // ✅ Type: number
+
+const userRoles = { alice: "admin", bob: "user" };
+const aliceRole = get(userRoles, "alice"); // ✅ Type: string
+```
+
+### Key Takeaways
+1. Overloads define **multiple valid call signatures** for one function
+2. TypeScript uses the **first matching signature** for type inference
+3. The **implementation signature** must handle all overload cases
+4. Enables **precise return types** based on argument types
+5. Callers get proper autocomplete for all valid signatures
+
+### Code Demo (in `src/overloads.ts`)
+We implemented:
+1. **`combine()`** — overloaded function for `string | number` combinations
+2. **`get<T>()`** — flexible getter overloaded for arrays and objects with `Record<string, T>`
