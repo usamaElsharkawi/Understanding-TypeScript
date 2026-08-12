@@ -529,3 +529,84 @@ const aliceRole = get(userRoles, "alice"); // ✅ Type: string
 We implemented:
 1. **`combine()`** — overloaded function for `string | number` combinations
 2. **`get<T>()`** — flexible getter overloaded for arrays and objects with `Record<string, T>`
+
+## Lecture 96: Making Sense of Index Types
+
+**Index types** let you type objects with **dynamic keys** — you specify the *shape* of the key-value pairs rather than naming each property explicitly. Essential for dynamic object access, utility functions, and API responses.
+
+### 1. Index Signatures — Flexible Objects
+
+```typescript
+type StringDictionary = { [key: string]: string };
+
+const dict: StringDictionary = {
+  hello: "world",
+  foo: "bar",
+  // name: 42,  // ❌ Error — value must be string
+};
+```
+
+**Numeric indexes** are also supported:
+```typescript
+type NumberArray = { [index: number]: string };
+const names: NumberArray = ["usama", "max", "ola"]; // Like string[]
+```
+
+### 2. `keyof` Operator — Union of Keys
+
+`keyof T` produces the **union of all property names** of type `T`:
+
+```typescript
+type Person = {
+  name: string;
+  age: number;
+  email: string;
+};
+
+type PersonKeys = keyof Person;
+// Equivalent to: "name" | "age" | "email"
+
+const key: PersonKeys = "name"; // ✅
+const bad: PersonKeys = "salary"; // ❌ Not a property of Person
+```
+
+### 3. Indexed Access Types — `T[K]`
+
+You can **look up** a property type within another type:
+
+```typescript
+type NameType = Person["name"];         // string
+type NameOrEmail = Person["name" | "email"]; // string
+
+// Generic indexed access:
+function pluck<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+```
+
+### 4. Generic `pluck` Function — Putting It All Together
+
+```typescript
+function pluck<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+
+const person = { name: "usama", age: 34, email: "test@test.com" };
+const name = pluck(person, "name"); // ✅ type: string
+const age = pluck(person, "age");   // ✅ type: number
+// pluck(person, "salary");        // ❌ Error — K must extend keyof T
+```
+
+### Key Takeaways
+1. **Index signatures** (`[key: string]: T`) type objects with dynamic keys
+2. **`keyof T`** returns the union of all property names of `T`
+3. **Indexed access** `T[K]` retrieves the type of a property
+4. **Generic constraints** (`K extends keyof T`) enable powerful utility functions like `pluck`
+5. This is the foundation for utility types like `Partial`, `Pick`, `Record`, and `keyof`
+
+### Code Demo (in `src/index-types.ts`)
+We implemented:
+1. **Index signature** — `StringDictionary` with `{ [key: string]: string }`
+2. **`keyof` operator** — `PersonKeys` union type applied to a variable
+3. **Indexed access types** — `Person["name"]` and `Person["name" | "email"]`
+4. **Generic `pluck()` function** — type-safe property extraction from any object
