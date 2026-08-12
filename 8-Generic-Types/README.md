@@ -267,3 +267,101 @@ We implemented:
 3. **`logAndReturn<T>`** — generic function using `Logger<T>`
 4. **`MyPartial<T>`** — custom partial type using mapped types
 5. **`MyReadonly<T>`** — custom readonly type using mapped types
+
+## Lecture 104: Generic Functions & Inference
+
+**Type inference** means TypeScript **automatically figures out** the type parameter(s) from the arguments you pass — you don't always need to write `<string>` or `<number>` explicitly.
+
+### Basic Inference
+
+TypeScript looks at the **types of the arguments** to infer the type parameter:
+
+```typescript
+function identity<T>(value: T): T {
+  return value;
+}
+
+identity("hello"); // T inferred as: string
+identity(42);      // T inferred as: number
+```
+
+### Multiple Type Parameters
+
+Each type parameter is inferred **independently** from its corresponding argument:
+
+```typescript
+function pair<A, B>(first: A, second: B): [A, B] {
+  return [first, second];
+}
+
+const result = pair("hello", 42);
+// A = string, B = number → result: [string, number]
+```
+
+### Default Type Parameters
+
+You can provide defaults, but this only affects the **type parameter**, not the function argument:
+
+```typescript
+function wrap<T = string>(value?: T): T[] {
+  return value === undefined ? [] : [value];
+}
+
+const numArray = wrap(42);       // T = number → number[]
+const strArray = wrap("hello");  // T = string → string[]
+const defaultArray = wrap();      // T defaults to string → string[]
+```
+
+### Inference with Array Types
+
+```typescript
+function firstTwo<T>(arr: T[]): T[] {
+  return arr.slice(0, 2);
+}
+
+firstTwo([1, 2, 3, 4]);     // T = number → number[]
+firstTwo(["a", "b", "c"]);  // T = string → string[]
+```
+
+### Callback Inference
+
+TypeScript can infer type parameters from **callback function return types** too:
+
+```typescript
+function mapArray<T, U>(arr: T[], fn: (item: T) => U): U[] {
+  return arr.map(fn);
+}
+
+const lengths = mapArray(["hello", "world"], (str) => str.length);
+// T = string (from array), U = number (from callback return)
+```
+
+### When Inference Fails — Explicit Types Required
+
+Sometimes TypeScript **cannot infer** the type parameter (no arguments to infer from, e.g., factory functions):
+
+```typescript
+function getPromise<T>(): Promise<T> {
+  return new Promise((resolve) => resolve(null as unknown as T));
+}
+
+// ❌ Can't infer T — must specify explicitly:
+const numPromise = getPromise<number>();
+const strPromise = getPromise<string>();
+```
+
+### Key Takeaways
+1. **TypeScript infers type parameters from arguments automatically** — no `<string>` needed most of the time
+2. **Each type parameter is inferred independently** — `pair<A, B>` infers A and B separately
+3. **Default type parameters** make the generic optional (`T = string`) — but don't make the argument optional
+4. **Inference can fail** — especially in factory functions with no arguments
+5. **Callback inference** — TypeScript infers from callback signatures and return types
+
+### Code Demo (in `src/generic-inference.ts`)
+We implemented:
+1. **`identity<T>`** — basic type inference from arguments
+2. **`pair<A, B>`** — independent multi-parameter inference
+3. **`wrap<T>`** — default type parameter (`T = string`)
+4. **`firstTwo<T>`** — inference with array types
+5. **`mapArray<T, U>`** — callback return type inference
+6. **`getPromise<T>`** — inference failure case, requiring explicit `<number>`
