@@ -465,3 +465,165 @@ We implemented:
 2. **`swap<A, B>`** — tuple position swapping with independent inference
 3. **`makeMap<K, V>`** — key-value mapping with `Record<K, V>`
 4. **`mergeObjects<A, B>`** — both parameters constrained to `extends object`
+
+## Lecture 106: Generics & Constraints
+
+Without constraints, generics accept **any type**, which can cause runtime errors. **Constraints** (`extends`) restrict what types a type parameter can be.
+
+### The Problem — Too "Free" Type Parameters
+
+```typescript
+function merge<A, B>(objA: A, objB: B): A & B {
+  return { ...objA, ...objB };
+}
+
+merge({ name: "usama" }, 34); // ❌ This compiles but makes no sense!
+```
+
+### The Solution — `extends` Constraints
+
+```typescript
+function merge<A extends object, B extends object>(objA: A, objB: B): A & B {
+  return { ...objA, ...objB };
+}
+
+merge({ name: "usama" }, { age: 34 }); // ✅ Objects work
+merge({ name: "usama" }, 34);          // ❌ Error — number not an object
+```
+
+### Constraint Guarantees Properties
+
+```typescript
+function longest<T extends { length: number }>(a: T, b: T): T {
+  return a.length >= b.length ? a : b; // ✅ T guaranteed to have .length
+}
+
+longest("hello", "world!"); // ✅ string has length
+longest([1, 2], [3, 4, 5]); // ✅ array has length
+longest(1, 2);              // ❌ number has NO length
+```
+
+### Key Rule
+> **Type parameters without constraints accept anything.** Constraints (`extends`) are your safety net to ensure type parameters have the properties/methods you rely on.
+
+---
+
+## Lecture 107: Constraints & Multiple Generic Types
+
+### Constraining Each Parameter Independently
+
+```typescript
+function merge<A extends object, B extends object>(objA: A, objB: B): A & B {
+  return { ...objA, ...objB };
+}
+
+const result = merge({ name: "max" }, { age: 30 });
+// T = { name: string }, U = { age: number }
+```
+
+### Combining Constraints with Multiple Type Params
+
+```typescript
+function countElements<T extends { length: number }>(items: T): number {
+  return items.length;
+}
+
+countElements("hello");       // 5
+countElements([1, 2, 3, 4]);  // 4
+countElements({ length: 10 }); // 10
+countElements(42);            // ❌ number has no length
+```
+
+### Key Point
+> Constraints work **per type parameter**. Mixing multiple generic types with constraints gives you precise control over each one.
+
+---
+
+## Lecture 108: Working with Generic Classes & Interfaces
+
+### Generic Classes
+
+```typescript
+class DataStorage<T> {
+  private data: T[] = [];
+
+  addItem(item: T) { this.data.push(item); }
+  removeItem(item: T) { this.data.splice(this.data.indexOf(item), 1); }
+  getItems(): T[] { return [...this.data]; }
+}
+
+const stringStorage = new DataStorage<string>();
+stringStorage.addItem("hello"); // ✅
+// stringStorage.addItem(42);  // ❌ Error — must be string
+
+const numberStorage = new DataStorage<number>();
+numberStorage.addItem(1); // ✅
+```
+
+### Generic Class with Constraint
+
+```typescript
+class LengthStorage<T extends { length: number }> {
+  private items: T[] = [];
+
+  add(item: T) { this.items.push(item); }
+  getTotalLength(): number {
+    return this.items.reduce((total, item) => total + item.length, 0);
+  }
+}
+
+const stringLenStore = new LengthStorage<string>(); // ✅ valid
+// const bad = new LengthStorage<number>(); // ❌ number has no length
+```
+
+### Generic Interfaces
+
+```typescript
+interface Repository<T> {
+  getAll(): T[];
+  getById(id: number): T | undefined;
+  add(item: T): void;
+}
+
+class UserRepository implements Repository<User> {
+  private users: User[] = [];
+
+  getAll(): User[] { return this.users; }
+  getById(id: number): User | undefined {
+    return this.users.find(u => u.id === id);
+  }
+  add(item: User) { this.users.push(item); }
+}
+```
+
+### Why Generic Classes Matter
+1. **One class, many types** — no code duplication
+2. **Type-safe at compile time** — wrong type arguments get caught
+3. **Perfect for data containers** — `DataStorage<T>`, `Repository<T>`
+4. **Combines with interfaces** — `Repository<T>` defines the contract
+
+---
+
+## Lecture 109: Summary
+
+### What We Learned in This Section
+
+| Concept | Key Idea |
+|---------|----------|
+| **Generics** | Templates parameterized by type (`<T>`) |
+| **Type inference** | TypeScript figures out `T` from arguments |
+| **Multiple parameters** | `<A, B>` for related but distinct types |
+| **Constraints** | `T extends Type` restricts what T can be |
+| **Generic classes** | Classes parameterized with type (`DataStorage<T>`) |
+| **Generic interfaces** | Interfaces parameterized with type (`Repository<T>`) |
+| **Built-ins** | `Array<T>`, `Promise<T>` are already generic |
+
+### The Big Picture
+**Generics = type-level abstraction.** They let you write code once and use it with any type, while keeping **full type safety** at compile time. This is why they're pervasive in TypeScript — from the language's built-ins to frameworks like React.
+
+### Code Demo (in `src/generic-classes.ts`)
+We implemented:
+1. **`DataStorage<T>`** — generic class storing and removing any type
+2. **`LengthStorage<T extends { length: number }>`** — generic class with constraint
+3. **`Repository<T>` interface** — generic interface implemented by `UserRepository`
+4. **`longest<T>`** — generic function with constraint, valid for strings and arrays
