@@ -192,3 +192,78 @@ We implemented:
 2. **`Box<T>` class** — instantiated with `string`, `number`, and `boolean`
 3. **`first<T>` function** — demonstrating type safety (`T | undefined` return)
 4. **Commented-out error case** — showing `charAt` on a `number` would fail at compile time
+
+## Lecture 103: Creating & Using a Generic Type
+
+This lecture is about building your **own generic types and utilities** — going beyond built-in `Array<T>` and `Promise<T>` to create custom generic abstractions.
+
+### Generic Function with `keyof` & Indexed Access
+
+```typescript
+// Type-safe property getter — works with ANY object type
+function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+
+const person = { name: "usama", age: 34 };
+const name = getProperty(person, "name"); // Type: string ✅
+const age = getProperty(person, "age");   // Type: number ✅
+// getProperty(person, "salary"); // ❌ Error — not in keyof Person
+```
+
+Key insight: `K extends keyof T` ensures `key` must be a **valid property of `T`**, and `T[K]` returns the **exact type of that property**.
+
+### Generic Type Aliases (Type Factories)
+
+You can create generic **type aliases** that transform types:
+
+```typescript
+// A type that makes all properties optional (mimics built-in Partial):
+type MyPartial<T> = {
+  [K in keyof T]?: T[K];
+};
+
+type Config = { url: string; timeout: number; retries: number };
+type PartialConfig = MyPartial<Config>;
+// { url?: string; timeout?: number; retries?: number; }
+```
+
+```typescript
+// A type that makes all properties readonly (mimics built-in Readonly):
+type MyReadonly<T> = {
+  readonly [K in keyof T]: T[K];
+};
+```
+
+### Generic Utility Types — `Logger<T>`
+
+```typescript
+type Logger<T> = (value: T) => string;
+
+const stringLogger: Logger<string> = (val) => `String: ${val}`;
+const numberLogger: Logger<number> = (val) => `Number: ${val}`;
+
+function logAndReturn<T>(value: T, logger: Logger<T>): T {
+  console.log(logger(value));
+  return value;
+}
+
+logAndReturn("hello", stringLogger); // Logs: "String: hello"
+logAndReturn(42, numberLogger);      // Logs: "Number: 42"
+```
+
+### Key Takeaways
+1. **Generic types are factories** — give a type parameter, get a new type
+2. **`K extends keyof T`** — constrains the key to valid properties
+3. **`T[K]`** — retrieves the exact type of a property
+4. **Type aliases can be generic** — `type MyType<T> = ...`
+5. **Mapped types** `[K in keyof T]` — transform each property of a type
+6. Enables **type-safe utility functions** like `getProperty`, `Partial`, `Readonly`
+
+### Code Demo (in `src/creating-generic-types.ts`)
+We implemented:
+1. **`getProperty<T, K>`** — type-safe property getter with `keyof` constraint
+2. **`Logger<T>` type** — generic factory for log functions
+3. **`logAndReturn<T>`** — generic function using `Logger<T>`
+4. **`MyPartial<T>`** — custom partial type using mapped types
+5. **`MyReadonly<T>`** — custom readonly type using mapped types
