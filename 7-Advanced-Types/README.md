@@ -610,3 +610,85 @@ We implemented:
 2. **`keyof` operator** — `PersonKeys` union type applied to a variable
 3. **Indexed access types** — `Person["name"]` and `Person["name" | "email"]`
 4. **Generic `pluck()` function** — type-safe property extraction from any object
+
+## Lecture 97: Constant Types with `as const`
+
+The `as const` assertion makes objects and arrays **read-only** and **narrows all properties to their exact literal types** — like putting `const` on every property of an object, deeply.
+
+### Without `as const` — Widened Types
+
+```typescript
+const config = {
+  url: "https://api.example.com", // type: string (widened)
+  timeout: 5000,                  // type: number (widened)
+  method: "GET",                  // type: string (widened)
+};
+```
+
+### With `as const` — Literal Types
+
+```typescript
+const config = {
+  url: "https://api.example.com", // type: "https://api.example.com" (literal!)
+  timeout: 5000,                  // type: 5000 (literal!)
+  method: "GET",                  // type: "GET" (literal!)
+} as const;
+```
+
+### Arrays Become Readonly Tuples
+
+```typescript
+const colors = ["red", "green", "blue"] as const;
+// Type: readonly ["red", "green", "blue"] — a tuple!
+colors[0];        // type: "red" (literal, not string)
+colors.push("yellow"); // ❌ Error — readonly array
+```
+
+### Combining with `typeof` + `keyof` for Union Types
+
+```typescript
+const DIRECTIONS = {
+  UP: "UP",
+  DOWN: "DOWN",
+  LEFT: "LEFT",
+  RIGHT: "RIGHT",
+} as const;
+
+type Direction = typeof DIRECTIONS[keyof typeof DIRECTIONS];
+// Equivalent to: "UP" | "DOWN" | "LEFT" | "RIGHT"
+
+function move(direction: Direction): string {
+  switch (direction) {
+    case DIRECTIONS.UP:   return "Going up!";
+    case DIRECTIONS.DOWN: return "Going down!";
+    case DIRECTIONS.LEFT: return "Going left!";
+    case DIRECTIONS.RIGHT:return "Going right!";
+  }
+}
+```
+
+### Function Return Types
+
+```typescript
+function getConfig() {
+  return { endpoint: "https://api.example.com", retries: 3 } as const;
+}
+const cfg = getConfig();
+// cfg.endpoint is "https://api.example.com" (literal type!)
+```
+
+### Key Takeaways
+1. **`as const` makes everything read-only** — objects, arrays, and all nested structures
+2. **Narrows to literal types** — instead of `string`, you get the exact string you wrote
+3. **Arrays become `readonly` tuples** — more specific than regular arrays
+4. **Enables exhaustive type checking** — when combined with `typeof` + `keyof`
+5. **No runtime cost** — it's a compile-time-only assertion
+6. **Useful for configuration objects** and **constant enums** patterns
+
+### Code Demo (in `src/as-const.ts`)
+We implemented:
+1. **Object with `as const`** — showing properties narrow to literal types
+2. **Array with `as const`** — demonstrating readonly tuple behavior
+3. **`DIRECTIONS` constant** — using `typeof` + `keyof` to derive a union type
+4. **`move()` function** — exhaustive switch over the derived union
+5. **`getConfig()` function** — returning an `as const` object for literal return types
