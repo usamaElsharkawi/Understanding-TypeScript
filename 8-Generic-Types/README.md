@@ -87,3 +87,108 @@ We implemented:
 1. **Equivalence demo** — `string[]` vs `Array<string>`, `Promise<number>` usage
 2. **Custom generic class** — `DataContainer<T>` with type-safe `add()`, `get()`, `getAll()`, and `count`
 3. **Multiple type instantiations** — using `DataContainer<string>` and `DataContainer<number>`
+
+## Lecture 102: Understanding Generic Types
+
+Generic types are **"templates" that accept type parameters** — just like functions accept value parameters, generic types accept **type parameters** that get filled in with concrete types later.
+
+### The Core Idea: Type Parameters
+
+```typescript
+// Regular function (takes value parameters):
+function identity(value: string): string { return value; }
+
+// Generic function (takes TYPE parameter + value parameter):
+function identity<T>(value: T): T { return value; }
+```
+
+- `T` is a **placeholder** — "give me a type, and I'll give you back the same type"
+- You **don't know** what `T` is when writing the function — TypeScript figures it out at the call site
+
+### How They Work: "Type-level Functions"
+
+```typescript
+// At the type level:
+Array<T>          // When T = string → string[]
+                // When T = number → number[]
+
+function wrapInArray<T>(value: T): T[] {
+  return [value];
+}
+// TypeScript internally "substitutes":
+// wrapInArray<string> → (value: string) => string[]
+// wrapInArray<number> → (value: number) => number[]
+```
+
+This is **compile-time only** — `T` doesn't exist at runtime. TypeScript **erases** it.
+
+### Type Inference — The Smart Part
+
+TypeScript often infers `T` automatically — you don't need to specify it:
+
+```typescript
+const numResult = identity(42);      // TypeScript infers: T = number → returns number
+const strResult = identity("hello"); // TypeScript infers: T = string → returns string
+const explicit = identity<string>("world"); // You can also specify explicitly
+```
+
+### Type Safety Guarantee
+
+Generics preserve **compile-time type safety**:
+
+```typescript
+function first<T>(arr: T[]): T | undefined {
+  return arr[0];
+}
+
+const numArray = first([1, 2, 3]);    // Type: number | undefined
+const strArray = first(["a", "b"]);   // Type: string | undefined
+
+// ❌ Compile-time error:
+// first([1, 2, 3]).charAt(0); // number has no charAt method
+```
+
+### Concrete vs Abstract — Code Duplication Problem
+
+**Without generics** — you write nearly identical code for each type:
+```typescript
+class StringBox { value: string; constructor(v: string) { this.value = v; } }
+class NumberBox { value: number; constructor(v: number) { this.value = v; } }
+```
+
+**With generics** — one abstraction, all types:
+```typescript
+class Box<T> {
+  value: T;
+  constructor(value: T) { this.value = value; }
+  getValue(): T { return this.value; }
+}
+
+const stringBox = new Box<string>("hello"); // T = string
+const numberBox = new Box<number>(42);      // T = number
+```
+
+### Generics Are Everywhere
+
+You've been using them all along:
+| Built-in Type | Generic Form | Meaning |
+|---------------|-------------|---------|
+| `string[]` | `Array<string>` | Array of strings |
+| `Promise<number>` | `Promise<T>` | Promise resolving to number |
+| `Map<string, number>` | `Map<K, V>` | Map from strings to numbers |
+| `Readonly<T>` | `Readonly<T>` | T made read-only |
+| `Partial<T>` | `Partial<T>` | T with all properties optional |
+
+### Key Takeaways
+1. **Generics are type-level functions** — they take type parameters and produce types
+2. **Type inference** — TypeScript often figures out `T` automatically
+3. **Compile-time only** — type parameters are erased from the final JavaScript
+4. **No runtime cost** — but full type safety at development time
+5. **Eliminates code duplication** — one generic definition, many concrete usages
+
+### Code Demo (in `src/understanding-generics.ts`)
+We implemented:
+1. **`identity<T>`** — demonstrating type inference with explicit and inferred type args
+2. **`Box<T>` class** — instantiated with `string`, `number`, and `boolean`
+3. **`first<T>` function** — demonstrating type safety (`T | undefined` return)
+4. **Commented-out error case** — showing `charAt` on a `number` would fail at compile time

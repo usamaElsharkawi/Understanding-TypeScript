@@ -1,0 +1,3 @@
+type DataStore = {
+    [key:string]:
+}
