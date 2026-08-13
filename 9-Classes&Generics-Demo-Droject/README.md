@@ -2,14 +2,14 @@
 
 ## Course Structure
 
-- **111.** Module Introduction
-- **111.** What Is A Linked List?
-- **112.** Creating List & Node Classes
-- **113.** Making the Class Generic
-- **114.** Adding an "add" Method
-- **115.** Adding Items More Efficiently
-- **116.** Accessing the Data & Compiling + Running the Code
-- **117.** Finishing the Linked List
+- **111.** Module Introduction ✅
+- **112.** What Is A Linked List? ✅
+- **113.** Creating List & Node Classes ✅
+- **114.** Making the Class Generic ✅
+- **115.** Adding an "add" Method ✅
+- **116.** Adding Items More Efficiently
+- **117.** Accessing the Data & Compiling + Running the Code
+- **118.** Finishing the Linked List
 
 ---
 
@@ -311,3 +311,288 @@ console.log(list.getLength());  // 0
 - Use **interface/type** for describing data shapes
 - Encapsulation protects the integrity of the data structure
 - Private properties with public methods = clean, maintainable API
+
+---
+
+## Lecture 113: Making the Class Generic
+
+### Overview
+We introduce **generics** to our linked list to achieve **type safety**. Instead of using `any`, we use a type parameter `<T>` so the compiler knows what type of data our linked list holds.
+
+### What is a Generic Type Parameter?
+
+**`<T>`** is a **type parameter** - a placeholder for any type. It acts like a variable, but for types instead of values.
+
+```typescript
+class LinkedList<T> {
+  // T can be number, string, User, etc.
+  add(value: T) { }
+}
+```
+
+### Why Use Generics?
+
+#### Without Generics (type: `any`)
+```typescript
+class LinkedList {
+  add(data: any) { }  // ❌ Loses type safety
+}
+
+const list = new LinkedList();
+list.add(5);         // OK
+list.add("hello");   // OK - but we might not want strings!
+list.add({});        // OK - anything goes
+```
+
+#### With Generics (type: `T`)
+```typescript
+class LinkedList<T> {
+  add(value: T) { }
+}
+
+const numbers = new LinkedList<number>();
+numbers.add(5);       // ✅ OK
+// numbers.add("hello");  // ❌ Error: Type 'string' is not assignable to type 'number'
+
+const strings = new LinkedList<string>();
+strings.add("hello"); // ✅ OK
+// strings.add(5);       // ❌ Error: Type 'number' is not assignable to type 'string'
+```
+
+### Implementation
+
+```typescript
+class ListNode<T> {
+  next?: ListNode<T>;
+  constructor(public value: T) {}
+}
+
+class LinkedList<T> {
+  private root?: ListNode<T>;  // ✅ Generic ListNode
+  private length = 0;
+
+  add(value: T) {
+    // T flows through the entire class
+    const node = new ListNode<T>(value);
+    // ... logic to add node
+  }
+}
+```
+
+### Why Both Classes Must Be Generic
+
+The type parameter `<T>` must flow through the entire structure:
+
+```
+LinkedList<T>  → manages →  ListNode<T>  → stores →  T (data)
+```
+
+**Example with `number`:**
+```typescript
+const list = new LinkedList<number>();
+// T = number
+// root?: ListNode<number>
+// ListNode.data: number
+```
+
+**Example with `string`:**
+```typescript
+const list = new LinkedList<string>();
+// T = string
+// root?: ListNode<string>
+// ListNode.data: string
+```
+
+### Creating Generic Instances
+
+```typescript
+// Specify the type explicitly
+const numbers = new LinkedList<number>();
+numbers.add(1);
+numbers.add(2);
+
+const names = new LinkedList<string>();
+names.add("Alice");
+names.add("Bob");
+
+// Type inference (less explicit)
+const list = new LinkedList(5);  // T inferred as number
+```
+
+### Benefits of Generics
+
+1. **Type Safety**: Errors caught at compile time
+2. **Reusability**: One class works for all types
+3. **Better IDE Support**: Autocomplete and type hints work correctly
+4. **No `any`**: We maintain full type information
+5. **Self-documenting**: The type parameter makes code clearer
+
+---
+
+### Key Takeaways
+
+- **`<T>` makes a class generic** - it accepts any type as a parameter
+- **Type safety** - errors caught at compile time, not runtime
+- **Reusability** - one class works for all types
+- **Both classes need generics** - `ListNode<T>` and `LinkedList<T>`
+- **`T` flows through** - `LinkedList<T>` → `ListNode<T>` → `data: T`
+- **No more `any`** - we use `T` instead of losing type information
+
+---
+
+## Lecture 114: Adding an "add" Method
+
+### Overview
+We implement the `add()` method to append new nodes to the end of the linked list. This is our first public method and demonstrates how to work with private properties safely.
+
+### Implementation
+
+```typescript
+add(value: T) {
+  const node = new ListNode(value);
+  
+  if (!this.root) {
+    // Case 1: Empty list
+    this.root = node;
+  } else {
+    // Case 2: Non-empty list - traverse to end
+    let current = this.root;
+    while (current.next) {
+      current = current.next;
+    }
+    current.next = node;
+  }
+  
+  this.length++;
+}
+```
+
+### How `add()` Works
+
+#### Step-by-Step Execution:
+
+```typescript
+const list = new LinkedList<number>();
+
+// Step 1: Add first element
+list.add(5);
+// - Creates: ListNode<number> { value: 5, next: undefined }
+// - List is empty (!this.root), so this.root = node
+// - List: [5]
+// - length = 1
+
+// Step 2: Add second element
+list.add(10);
+// - Creates: ListNode<number> { value: 10, next: undefined }
+// - List is not empty, so traverse:
+//   - current = this.root (node with value 5)
+//   - current.next is undefined, so exit loop
+//   - current.next = node (new node with value 10)
+// - List: [5] → [10]
+// - length = 2
+
+// Step 3: Add third element
+list.add(15);
+// - Creates: ListNode<number> { value: 15, next: undefined }
+// - Traverse: 5 → 10 (both have next defined, except 10)
+//   - current = 10 (next is undefined)
+//   - Exit loop
+// - current.next = node (new node with value 15)
+// - List: [5] → [10] → [15]
+// - length = 3
+```
+
+### The Two Cases
+
+#### Case 1: Empty List (`!this.root`)
+```typescript
+if (!this.root) {
+  this.root = node;
+}
+```
+- The list has no nodes
+- The new node becomes the `root` (first node)
+- Simple assignment
+
+#### Case 2: Non-Empty List (else block)
+```typescript
+let current = this.root;
+while (current.next) {
+  current = current.next;
+}
+current.next = node;
+```
+- Start at `root`
+- Follow `next` pointers until we reach the last node
+- The last node has `next = undefined`
+- Set that node's `next` to our new node
+
+### Visual Example
+
+```
+Before: [5] → [10] → null
+                    ↑ current (while loop ends here)
+
+After:  [5] → [10] → [15] → null
+                      ↑ new node added
+```
+
+### Why the While Loop Works
+
+```typescript
+while (current.next) {
+  current = current.next;
+}
+```
+
+- `current.next` is `undefined` for the last node
+- The loop continues while `next` EXISTS
+- When `next` is `undefined`, the loop stops
+- `current` now points to the last node
+
+### Time Complexity
+
+**Current implementation: O(n)**
+
+- To add one element, we traverse n-1 existing elements
+- For list with 1000 elements, adding element 1001 requires 1000 iterations
+- Not optimal for large lists (we'll fix this in lecture 115)
+
+### Accessing Private Properties
+
+Notice how `add()` can access `private` properties:
+
+```typescript
+add(value: T) {
+  this.root = node;      // ✅ Inside class - can access private
+  this.length++;         // ✅ Inside class - can access private
+}
+
+// Outside the class:
+// list.root = node;     // ❌ Error: Property 'root' is private
+// list.length = 5;      // ❌ Error: Property 'length' is private
+```
+
+This is **encapsulation** - the class controls how data is modified.
+
+### Type Safety in Action
+
+```typescript
+const list = new LinkedList<number>();
+
+list.add(5);        // ✅ T = number, value = 5
+list.add(10);       // ✅ OK
+// list.add("text"); // ❌ Compile-time error!
+
+// The compiler prevents type errors before runtime
+```
+
+### Key Takeaways
+
+- **Generics** (`<T>`) make the class type-safe and reusable
+- **Both classes must be generic** for type information to flow correctly
+- **`add()` method** appends nodes to the end of the list
+- **Two cases**: empty list (set root) and non-empty list (traverse + append)
+- **Time complexity is O(n)** - traverses entire list to find end
+- **Encapsulation** ensures only the class can modify `root` and `length`
+- **Type safety** catches errors at compile time, not runtime
