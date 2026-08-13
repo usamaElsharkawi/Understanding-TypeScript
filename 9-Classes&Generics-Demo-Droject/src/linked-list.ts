@@ -5,18 +5,17 @@ class ListNode<T> {
 
 class LinkedList<T> {
   private root?: ListNode<T>;
+  private tail?: ListNode<T>;
   private length = 0;
 
   add(value: T) {
     const node = new ListNode(value);
-    if (!this.root) {
+    if (!this.root || !this.tail) {
       this.root = node;
+      this.tail = node;
     } else {
-      let current = this.root;
-      while (current.next) {
-        current = current.next;
-      }
-      current.next = node;
+      this.tail.next = node;
+      this.tail = node;
     }
     this.length++;
   }

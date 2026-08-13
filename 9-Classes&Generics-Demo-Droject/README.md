@@ -7,7 +7,7 @@
 - **113.** Creating List & Node Classes ✅
 - **114.** Making the Class Generic ✅
 - **115.** Adding an "add" Method ✅
-- **116.** Adding Items More Efficiently
+- **116.** Adding Items More Efficiently ✅
 - **117.** Accessing the Data & Compiling + Running the Code
 - **118.** Finishing the Linked List
 
@@ -596,3 +596,95 @@ list.add(10);       // ✅ OK
 - **Time complexity is O(n)** - traverses entire list to find end
 - **Encapsulation** ensures only the class can modify `root` and `length`
 - **Type safety** catches errors at compile time, not runtime
+
+---
+
+## Lecture 115: Adding Items More Efficiently
+
+### Overview
+We optimize the `add()` method by introducing a `tail` pointer. This reduces the time complexity from **O(n)** to **O(1)** by eliminating the need to traverse the entire list when adding a new element.
+
+### The Problem with Lecture 114
+
+```typescript
+add(value: T) {
+  const node = new ListNode(value);
+  
+  if (!this.root) {
+    this.root = node;
+  } else {
+    let current = this.root;
+    while (current.next) {      // ❌ O(n) - must traverse entire list
+      current = current.next;
+    }
+    current.next = node;
+  }
+  
+  this.length++;
+}
+```
+
+**Time Complexity: O(n)**
+- To add one element, we visit every existing element
+- For list with 1000 elements, adding element 1001 requires 1000 iterations
+- Not scalable for large lists!
+
+### The Solution: Add a `tail` Pointer
+
+**Concept:** Store a direct reference to the **last node** in the list.
+
+```typescript
+class LinkedList<T> {
+  private root?: ListNode<T>;
+  private tail?: ListNode<T>;  // ✅ NEW: Direct reference to last node
+  private length = 0;
+}
+```
+
+### Optimized Implementation
+
+```typescript
+add(value: T) {
+  const node = new ListNode(value);
+  
+  if (!this.root || !this.tail) {
+    // Empty list: both root and tail point to the new node
+    this.root = node;
+    this.tail = node;
+  } else {
+    // Non-empty list: O(1) direct access via tail
+    this.tail.next = node;  // Link current tail to new node
+    this.tail = node;       // Update tail to point to new node
+  }
+  
+  this.length++;
+}
+```
+
+**Time Complexity: O(1)**
+- Access tail directly (no traversal)
+- Update tail in constant time
+- Same performance whether list has 10 or 1,000,000 elements!
+
+---
+
+### Performance Comparison
+
+| Operation | Lecture 114 (no tail) | Lecture 115 (with tail) |
+|-----------|----------------------|------------------------|
+| add() to empty list | O(1) | O(1) |
+| add() to 10 elements | O(10) | O(1) |
+| add() to 1000 elements | O(1000) | O(1) |
+| add() to 1,000,000 elements | O(1,000,000) | O(1) |
+
+---
+
+### Key Takeaways
+
+1. **Tail pointer enables O(1) `add()`** - No more traversal needed
+2. **Trade memory for speed** - One extra pointer vs. O(n) traversal
+3. **Always update both `root` and `tail`** when list is empty
+4. **Always update `tail`** after adding to non-empty list
+5. **This is a standard optimization** in linked list implementations
+6. **Dramatic performance improvement** for large lists (1,000,000+ elements)
+7. **O(1) is constant time** - same speed regardless of list size
