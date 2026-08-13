@@ -8,7 +8,7 @@
 - **114.** Making the Class Generic ✅
 - **115.** Adding an "add" Method ✅
 - **116.** Adding Items More Efficiently ✅
-- **117.** Accessing the Data & Compiling + Running the Code
+- **117.** Accessing the Data & Compiling + Running the Code ✅
 - **118.** Finishing the Linked List
 
 ---
@@ -688,3 +688,288 @@ add(value: T) {
 5. **This is a standard optimization** in linked list implementations
 6. **Dramatic performance improvement** for large lists (1,000,000+ elements)
 7. **O(1) is constant time** - same speed regardless of list size
+
+---
+
+## Lecture 116: Accessing the Data & Compiling + Running the Code
+
+### Overview
+We implement public methods to access and display data from our linked list: `getNumberOfElements()` and `print()`. We also learn how to compile TypeScript code and run it with Node.js.
+
+### New Methods Added
+
+#### 1. `getNumberOfElements()` - O(1) Size Access
+
+```typescript
+getNumberOfElements() {
+  return this.length;
+}
+```
+
+**Purpose:** Return the number of elements in the list.
+
+**Why a method?**
+- `length` is `private` for encapsulation
+- Users need a safe way to get the size
+- O(1) - just returning a stored value
+
+**Usage:**
+```typescript
+const numberList = new LinkedList<number>();
+numberList.add(9);
+numberList.add(33);
+numberList.add(5);
+
+console.log(numberList.getNumberOfElements());  // Output: 3
+```
+
+**Time Complexity:** O(1) - no computation, just reading a variable
+
+---
+
+#### 2. `print()` - O(n) Traversal and Display
+
+```typescript
+print() {
+  let current = this.root;
+  while (current) {
+    console.log(current.value);
+    current = current.next;
+  }
+}
+```
+
+**Purpose:** Traverse the list and print each element.
+
+**How it works:**
+1. Start at `root`
+2. While `current` exists:
+   - Print the current node's value
+   - Move to the next node
+3. Stop when `current` becomes `undefined`
+
+**Step-by-step execution:**
+
+```typescript
+numberList.print();
+```
+
+```
+Initial: current = root → [9]
+
+Iteration 1: print 9, current = [33]
+Iteration 2: print 33, current = [5]
+Iteration 3: print 5, current = undefined
+Iteration 4: STOP
+
+Output:
+9
+33
+5
+```
+
+**Time Complexity:** O(n) - must visit every node once
+
+---
+
+### Why `while (current)` for `print()`?
+
+#### Comparison with `add()` Loop
+
+**`add()` - Stop at last node:**
+```typescript
+while (current.next) {
+  current = current.next;
+}
+```
+- Stops when `next` is undefined
+- Does NOT process the last node itself
+
+**`print()` - Process all nodes:**
+```typescript
+while (current) {
+  console.log(current.value);
+  current = current.next;
+}
+```
+- Stops when `current` becomes undefined
+- DOES process the last node before stopping
+
+**Example:**
+
+```
+List: [A] → [B] → [C] → null
+
+add() loop: stops at [C] (doesn't process it)
+print() loop: prints A, B, C (processes all)
+```
+
+---
+
+### Complete Usage Example
+
+```typescript
+const numberList = new LinkedList<number>();
+
+numberList.add(9);
+numberList.add(33);
+numberList.add(5);
+
+console.log(numberList.getNumberOfElements());  // 3
+numberList.print();
+// Output: 9, 33, 5
+```
+
+**Expected Output:**
+```
+3
+9
+33
+5
+```
+
+---
+
+### Compiling and Running TypeScript
+
+#### Step 1: Compile TypeScript to JavaScript
+
+```bash
+cd /path/to/9-Classes&Generics-Demo-Droject
+tsc
+```
+
+**What happens:**
+- TypeScript compiler reads `src/linked-list.ts`
+- Generates `dist/linked-list.js` (compiled JavaScript)
+- Generates `dist/linked-list.d.ts` (type declarations)
+- Generates `dist/linked-list.js.map` (source maps)
+
+**tsconfig.json:**
+```json
+{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "strict": true
+  }
+}
+```
+
+#### Step 2: Run the Compiled JavaScript
+
+```bash
+node dist/linked-list.js
+```
+
+**Output:**
+```
+3
+9
+33
+5
+```
+
+#### Full Workflow:
+
+```bash
+# 1. Write code in src/linked-list.ts
+# 2. Compile
+tsc
+
+# 3. Run
+node dist/linked-list.js
+
+# 4. See output
+```
+
+---
+
+### Type Safety in Action
+
+```typescript
+const numberList = new LinkedList<number>();
+
+numberList.add(9);      // ✅ OK - number
+numberList.add(33);     // ✅ OK - number
+numberList.add(5);      // ✅ OK - number
+// numberList.add("text");  // ❌ TypeScript error!
+
+const stringList = new LinkedList<string>();
+stringList.add("hello");  // ✅ OK - string
+// stringList.add(42);     // ❌ TypeScript error!
+```
+
+**The compiler catches type errors before runtime!**
+
+---
+
+### The Traversal Pattern
+
+**Standard pattern for visiting all nodes:**
+
+```typescript
+let current = this.root;
+while (current) {
+  // Do something with current
+  current = current.next;
+}
+```
+
+**Used in:**
+- `print()` - print each node
+- Future methods: `find()`, `toArray()`, etc.
+
+---
+
+### Time Complexity Summary
+
+| Method | Time Complexity | Description |
+|--------|----------------|-------------|
+| `add()` | O(1) | Direct access via tail pointer |
+| `getNumberOfElements()` | O(1) | Return stored length |
+| `print()` | O(n) | Visit every node once |
+
+---
+
+### Common Mistakes in `print()`
+
+#### ❌ Mistake 1: Off-by-one (missing last node)
+```typescript
+while (current.next) {  // ❌ Won't print last node
+  console.log(current.value);
+  current = current.next;
+}
+```
+
+#### ❌ Mistake 2: Infinite loop
+```typescript
+while (current) {
+  console.log(current.value);
+  // ❌ Missing: current = current.next;
+}
+```
+
+#### ❌ Mistake 3: Only printing first node
+```typescript
+if (current) {  // ❌ Only executes once
+  console.log(current.value);
+}
+```
+}
+```
+
+---
+
+### Key Takeaways
+
+1. **`getNumberOfElements()`** - O(1) method to get list size via private `length`
+2. **`print()`** - O(n) traversal method to display all elements
+3. **Traversal pattern** - `while (current)` visits every node including the last
+4. **Difference from `add()`** - `print()` processes current node, `add()` finds last node
+5. **Compilation** - `tsc` converts TypeScript to JavaScript in `dist/` folder
+6. **Execution** - `node dist/linked-list.js` runs the compiled code
+7. **Type safety** - Generics prevent adding wrong types
+8. **Encapsulation** - Private properties protected, public methods provide safe access
+9. **This is working code** - You can compile and run it now!
+10. **Linked list trade-offs** - No random access, but efficient insertion with tail pointer
