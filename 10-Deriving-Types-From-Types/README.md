@@ -13,7 +13,7 @@
 - **126.** Introducing Mapped Types ✅
 - **127.** Readonly Types & Optional Mapping ✅
 - **128.** Exploring Template Literal Types ✅
-- **129.** Introducing Conditional Types
+- **129.** Introducing Conditional Types ✅
 - **130.** Conditional Types - Another Example
 - **131.** Making Sense of the "infer" Keyword
 - **132.** TypeScript's Got You Covered: Built-in Utility Types
@@ -1038,3 +1038,157 @@ type Lower = Lowercase<"HELLO">;            // "hello"
 8. **Zero runtime overhead** - all erased after type checking
 9. **Essential for advanced TypeScript** patterns and library design
 10. **Works with conditional types** for sophisticated string manipulation
+
+---
+
+## Lecture 129: Introducing Conditional Types
+
+### Overview
+Conditional types are **one of TypeScript's most powerful features** - they let you create types that **choose between two types based on a condition**, similar to how ternary operators work at runtime but at the type level!
+
+### Basic Syntax
+
+```typescript
+type SomeType<T> = T extends X ? Y : Z;
+```
+
+This reads as: "If T extends X, then Y, otherwise Z."
+
+### Simple Example
+
+```typescript
+type Animal = "dog" | "cat" | "bird";
+
+type IsAnimal<T> = T extends Animal ? "yes" : "no";
+
+type Test1 = IsAnimal<string>;   // "no" (string doesn't extend Animal)
+type Test2 = IsAnimal<"dog">;    // "yes" (dog extends Animal)
+```
+
+### Distributive Conditional Types
+
+**Key property**: Conditional types ARE distributive over unions when the checked type is a type parameter.
+
+```typescript
+// This distributes over unions
+type ToArray<T> = T extends any ? T[] : never;
+
+type Result1 = ToArray<number | string>;
+// (number | string)[]  → [number, string][]
+// NOT number[] | string[] (distribution happens)
+```
+
+### Example: Distribution in Action
+
+```typescript
+type AnimalToys = "dog" extends string ? "ball" : "stick";  // "ball"
+type MixedToys = ("dog" | 123) extends string ? "ball" : "stick";
+// "ball" | "stick" (distribution: "dog"→"ball", 123→"stick")
+```
+
+### With `infer`
+
+Conditional types combined with `infer` let you **extract types from pattern matches**:
+
+```typescript
+type GetMessageType<T> = T extends `message:${infer M}` ? M : never;
+
+type Msg1 = GetMessageType<"message:hello">;  // "hello"
+type Msg2 = GetMessageType<"message:123">;   // 123
+type Msg3 = GetMessageType<"other:hello">;  // never
+```
+
+### Common Built-in Examples
+
+These are TypeScript's built-in types that use conditional types:
+
+```typescript
+// Exclude types from a union
+type MyExclude<T, U> = T extends U ? never : T;
+
+type A = "a" | "b" | "c";
+type B = "a" | "b";
+
+type ExcludeAB = MyExclude<A, B>;  // "c"
+
+// Extract types from union
+type MyExtract<T, U> = T extends U ? T : never;
+
+type ExtractAB = MyExtract<A, B>;  // "a" | "b"
+```
+
+### Practical Examples
+
+#### 1. Function Return Types
+```typescript
+type ReturnType<T> = T extends (...args: any[]) => infer R ? R : never;
+
+type GetUser = () => { name: string; age: number };
+type User = ReturnType<GetUser>;  // { name: string; age: number }
+```
+
+#### 2. Instance Type from Constructor
+```typescript
+type InstanceType<T> = T extends new (...args: any[]) => infer R ? R : never;
+
+class Person {
+  name: string = "John";
+}
+
+type PersonInstance = InstanceType<typeof Person>;  // Person
+```
+
+#### 3. Array/Tuple Elements
+```typescript
+type ElementType<T> = T extends (infer E)[] ? E : never;
+
+type NumArray = ElementType<number[]>;      // number
+type StrTuple = ElementType<[string, number]>; // string | number
+```
+
+#### 4. Async vs Sync Detection
+```typescript
+type AsyncOrSync<T> = T extends (...args: any[]) => infer R 
+  ? R extends Promise<any> ? "async" : "sync" 
+  : "not a function";
+
+type Test1 = AsyncOrSync<() => string>;            // "sync"
+type Test2 = AsyncOrSync<() => Promise<string>>; // "async"
+type Test3 = AsyncOrSync<string>;                  // "not a function"
+```
+
+### Non-Distributive Conditional Types
+
+Use a wrapper type to prevent distribution:
+
+```typescript
+type Dist<T> = T extends X ? Y : Z;         // Distributive
+type NonDist<T> = [T] extends [X] ? Y : Z;  // Not distributive
+
+// Example:
+type DistResult = ("a" | "b") extends string ? number : boolean;
+// number | boolean (both "a" and "b" extend string)
+
+type NonDistResult = ["a" | "b"] extends [string] ? number : boolean;
+// boolean (the tuple "a" | "b" doesn't extend [string])
+```
+
+### Why Conditional Types Matter
+
+1. **Type-level decision making** - Choose types based on patterns
+2. **Type inference** - Extract information from complex types
+3. **Build utility types** - Foundation for TypeScript's built-in utilities
+4. **Library design** - Create flexible, type-safe APIs
+5. **Zero runtime cost** - All resolved at compile time
+6. **Reusability** - Works with generics and mapped types
+
+### Key Takeaways for Lecture 129
+
+1. **Syntax**: `T extends X ? Y : Z` - if T extends X, return Y, else Z
+2. **Distributive over unions** - conditional applies to each union member
+3. **Works with `infer`** to extract types from patterns
+4. **Built-in examples**: `Exclude`, `Extract`, `ReturnType`, `InstanceType`
+5. **Practical uses**: return types, instance types, element extraction
+6. **Non-distributive version** - wrap in tuple to prevent distribution
+7. **Foundation for advanced types** - essential for utility types
+8. **Zero runtime cost** - all resolved at compile time
