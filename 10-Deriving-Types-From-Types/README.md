@@ -13,10 +13,7 @@
 - **126.** Introducing Mapped Types ✅
 - **127.** Readonly Types & Optional Mapping ✅
 - **128.** Exploring Template Literal Types ✅
-- **129.** Introducing Conditional Types ✅
-- **130.** Conditional Types - Another Example
-- **131.** Making Sense of the "infer" Keyword
-- **132.** TypeScript's Got You Covered: Built-in Utility Types
+- **129-132.** Advanced Type Features (Conditional Types, Infer, Utility Types) ✅
 
 ---
 
