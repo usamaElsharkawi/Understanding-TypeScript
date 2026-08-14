@@ -8,7 +8,7 @@
 - **121.** Another Great Use-case for "typeof" ✅
 - **122.** Extracting Keys with "keyof" ✅
 - **123.** "keyof" & A More Useful Example ✅
-- **124.** Understanding Indexed Access Types
+- **124.** Understanding Indexed Access Types ✅
 - **125.** Accessing Array Elements with Indexed Access Types
 - **126.** Introducing Mapped Types
 - **127.** Readonly Types & Optional Mapping
@@ -402,3 +402,259 @@ function getProp<T extends object, K extends keyof T>(obj: T, key: K): T[K] {
 5. **Type inference** works automatically - TypeScript infers T and K
 6. **Compile-time only** - no runtime performance cost
 7. **IDE support** - full autocomplete and type checking
+
+---
+
+## Lecture 124: Understanding Indexed Access Types
+
+### Overview
+Indexed Access Types allow us to **extract the type of a specific property** from a type or interface using the syntax `Type[Key]`. This is a powerful feature for creating reusable, type-safe code without duplicating type definitions.
+
+### What Are Indexed Access Types?
+
+They let you look up the type of a property **by its name** within a type definition.
+
+```typescript
+interface User {
+  name: string;
+  age: number;
+  email: string;
+}
+
+// Extract specific property types
+type UserName = User["name"];    // type UserName = string
+type UserAge = User["age"];      // type UserAge = number
+type UserEmail = User["email"];  // type UserEmail = string
+```
+
+---
+
+### Extracting Multiple Property Types
+
+You can use **union types** as index keys:
+
+```typescript
+interface User {
+  name: string;
+  age: number;
+  email: string;
+  isActive: boolean;
+}
+
+// Extract multiple properties
+type NameOrAge = User["name" | "age"];
+// Result: string | number
+
+type AllUserTypes = User[keyof User];
+// keyof User = "name" | "age" | "email"
+// Result: string | number | boolean
+```
+
+---
+
+### Working with Arrays
+
+Extract the type of array elements using `[number]`:
+
+```typescript
+interface TodoList {
+  todos: {
+    id: number;
+    text: string;
+    completed: boolean;
+  }[];
+}
+
+// Extract the array type
+type Todos = TodoList["todos"];
+// Result: { id: number; text: string; completed: boolean }[]
+
+// Extract the element type
+type Todo = TodoList["todos"][number];
+// Result: { id: number; text: string; completed: boolean }
+
+// Alternative syntax:
+type TodoAlt = TodoList["todos"][number];
+// Same result: { id: number; text: string; completed: boolean }
+```
+
+---
+
+### Practical Example from Our Code
+
+```typescript
+type AppUser = {
+  name: string;
+  age: number;
+  permissions: {
+    id: string;
+    title: string;
+    description: string;
+  }[];
+};
+
+// Extract nested property type
+type Perms = AppUser["permissions"];
+// Result: { id: string; title: string; description: string }[]
+
+// Extract array element type
+type Perm = Perms[number];
+// Result: { id: string; title: string; description: string }
+
+// One-step extraction:
+type PermDirect = AppUser["permissions"][number];
+// Same result: { id: string; title: string; description: string }
+```
+
+---
+
+### Nested Indexed Access
+
+You can chain indexed access types for deeply nested types:
+
+```typescript
+type AppUser = {
+  name: string;
+  permissions: {
+    id: string;
+    title: string;
+    description: string;
+  }[];
+};
+
+// Extract specific nested property type
+type PermissionId = AppUser["permissions"][number]["id"];
+// Result: string
+
+type PermissionTitle = AppUser["permissions"][number]["title"];
+// Result: string
+```
+
+---
+
+### Comparison with `keyof`
+
+| Feature | `keyof` | Indexed Access (`Type[Key]`) |
+|---------|---------|------------------------------|
+| Input | A type | A type + a key |
+| Output | Union of keys | Type of specific property |
+| Use case | Get all valid keys | Get the type of a specific key |
+
+```typescript
+interface User {
+  name: string;
+  age: number;
+}
+
+type Keys = keyof User;                // "name" | "age"
+type NameType = User["name"];          // string
+type AgeType = User["age"];            // number
+```
+
+---
+
+### Type-Safe Property Access with Indexed Access
+
+```typescript
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+}
+
+function getProductProperty<K extends keyof Product>(
+  product: Product,
+  key: K
+): Product[K] {
+  return product[key];
+}
+
+const laptop = { id: 1, name: "Laptop", price: 999 };
+
+const id = getProductProperty(laptop, "id");     // type: number
+const name = getProductProperty(laptop, "name"); // type: string
+// getProductProperty(laptop, "xyz");            // ❌ Error: "xyz" not a key
+```
+
+---
+
+### With `typeof` Values
+
+```typescript
+const user = {
+  name: "Alice",
+  age: 30,
+  isActive: true
+};
+
+// Derive type from value, then extract property types
+type UserType = typeof user;
+
+type UserName = typeof user["name"];     // string
+type UserAge = typeof user["age"];       // number
+type UserStatus = typeof user["isActive"]; // boolean
+```
+
+---
+
+### Key Differences from `typeof` and `keyof`
+
+| Feature | Input | Output |
+|---------|-------|--------|
+| `typeof value` | Runtime value | Type |
+| `keyof Type` | Compile-time type | Union of keys |
+| `Type["key"]` | Type + key | Specific property type |
+
+---
+
+### Common Patterns
+
+#### Pattern 1: Extract and Reuse
+```typescript
+interface ApiResponse {
+  users: {
+    id: number;
+    username: string;
+  }[];
+}
+
+// Reuse the extracted type
+type User = ApiResponse["users"][number];
+type UserId = User["id"];
+
+function handleUser(user: User): UserId {
+  return user.id;
+}
+```
+
+#### Pattern 2: Generic Function with Indexed Access
+```typescript
+// Works with ANY object type!
+function pluck<T, K extends keyof T>(array: T[], key: K): T[K][] {
+  return array.map(item => item[key]);
+}
+
+const users = [
+  { name: "Alice", age: 25 },
+  { name: "Bob", age: 30 }
+];
+
+const names = pluck(users, "name");  // Returns: string[]
+const ages = pluck(users, "age");    // Returns: number[]
+```
+const names = pluck(users, "name");  // Returns: string[]
+const ages = pluck(users, "age");    // Returns: number[]
+```
+
+---
+
+### Key Takeaways
+
+1. **Indexed Access Types** (`Type["key"]`) extract specific property types from a type
+2. **Array element access**: Use `[number]` to get the type of array elements
+3. **Nested access**: Chain multiple `[]` for deeply nested types
+4. **Multi-key access**: `Type["key1" | "key2"]` extracts union of multiple property types
+5. **Combined with `keyof`**: `Type[keyof Type]` gives union of all property value types
+6. **Compile-time only** - no runtime overhead
+7. **Enables patterns like `pluck<T, K>`** for type-safe array property extraction
+8. **Auto-updates when source types change** - no manual maintenance needed
