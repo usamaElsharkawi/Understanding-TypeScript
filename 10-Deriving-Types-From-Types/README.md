@@ -9,7 +9,7 @@
 - **122.** Extracting Keys with "keyof" ✅
 - **123.** "keyof" & A More Useful Example ✅
 - **124.** Understanding Indexed Access Types ✅
-- **125.** Accessing Array Elements with Indexed Access Types
+- **125.** Accessing Array Elements with Indexed Access Types ✅
 - **126.** Introducing Mapped Types
 - **127.** Readonly Types & Optional Mapping
 - **128.** Exploring Template Literal Types
@@ -658,3 +658,163 @@ const ages = pluck(users, "age");    // Returns: number[]
 6. **Compile-time only** - no runtime overhead
 7. **Enables patterns like `pluck<T, K>`** for type-safe array property extraction
 8. **Auto-updates when source types change** - no manual maintenance needed
+
+---
+
+## Lecture 125: Accessing Array Elements with Indexed Access Types
+
+### Overview
+This lecture focuses on using indexed access types to **extract types from array elements**. We learn how `Type[number]` syntax gives us the type of elements inside arrays, which is crucial for type-safe array operations.
+
+### The Core Concept: `Array[number]`
+
+```typescript
+const numbers = [1, 2, 3, 4, 5];
+
+type NumberArray = typeof numbers;
+//     ^? number[]
+
+type ElementType = NumberArray[number];
+//     ^? number
+```
+
+| Expression | Meaning | Result |
+|------------|---------|--------|
+| `typeof numbers` | Get type from value | `number[]` |
+| `NumberArray[number]` | Get element type at numeric index | `number` |
+
+---
+
+### Why `[number]` Works for Arrays
+
+In TypeScript, `[number]` extracts the **element type** from any array type:
+
+```typescript
+type StringArray = string[];
+type StringElement = StringArray[number];  // string
+
+type NumberArray = number[];
+type NumberElement = NumberArray[number];  // number
+```
+
+---
+
+### Extracting from Object Array Properties
+
+```typescript
+type TodoList = {
+  todos: {
+    id: number;
+    text: string;
+    tags: string[];
+  }[];
+};
+
+// Extract the todo object type
+type Todo = TodoList["todos"][number];
+// Result: { id: number; text: string; tags: string[] }
+
+// Extract the tags array element type
+type Tag = Todo["tags"][number];
+// Result: string
+```
+
+---
+
+### Nested Array Access
+
+For multi-dimensional arrays, chain multiple `[number]`:
+
+```typescript
+type Matrix = {
+  grid: number[][][];  // 3D array
+};
+
+type Layer1 = Matrix["grid"];                        // number[][][]
+type Layer2 = Matrix["grid"][number];               // number[][]
+type Layer3 = Matrix["grid"][number][number];       // number[]
+type Layer4 = Matrix["grid"][number][number][number]; // number
+```
+
+---
+
+### Practical Example: API Response Handling
+
+```typescript
+interface ApiResult {
+  data: {
+    userId: number;
+    posts: {
+      id: number;
+      title: string;
+      content: string;
+    }[];
+  }[];
+}
+
+// Extract types for easier use:
+type UserData = ApiResult["data"][number];      // { userId: number; posts: {...}[] }
+type Post = UserData["posts"][number];          // { id: number; title: string; content: string }
+
+// Now use them safely:
+function processPost(post: Post) {
+  post.title;   // string (type-safe!)
+  post.content;  // string (type-safe!)
+}
+```
+
+---
+
+### Common Patterns
+
+#### Pattern 1: Extract Element Type from Array
+```typescript
+type StringArray = string[];
+type StringElement = StringArray[number];  // string
+
+type NumberArray = number[];
+type NumberElement = NumberArray[number];  // number
+```
+
+#### Pattern 2: Extract from Nested Arrays
+```typescript
+interface Data {
+  matrix: number[][];
+}
+
+type Matrix = Data["matrix"];                    // number[][]
+type Row = Data["matrix"][number];              // number[]
+type Cell = Data["matrix"][number][number];     // number
+```
+
+#### Pattern 3: Extract Object Keys from Array Elements
+```typescript
+interface UserList {
+  users: {
+    name: string;
+    age: number;
+    role: "admin" | "user";
+  }[];
+}
+
+// Get the user object type
+type User = UserList["users"][number];
+// { name: string; age: number; role: "admin" | "user" }
+
+// Get specific keys
+type UserName = User["name"];      // string
+type UserRole = User["role"];      // "admin" | "user"
+```
+
+---
+
+### Key Takeaways
+
+1. **`Type[number]`** extracts the element type from any array type
+2. **Chain multiple `[number]`** for multi-dimensional arrays
+3. **Combine with other indexed access types** for complex nesting
+4. **Extract once, reuse everywhere** - avoids type duplication
+5. **Works with tuples, arrays, and arrays of objects**
+6. **Enables type-safe generic functions** like `pluck`, `firstElement`
+7. **Auto-syncs with source types** - no manual maintenance**
+8. **Essential for working with nested data structures**
