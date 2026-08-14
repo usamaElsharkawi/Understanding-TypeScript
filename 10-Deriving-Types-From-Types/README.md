@@ -1189,3 +1189,252 @@ type NonDistResult = ["a" | "b"] extends [string] ? number : boolean;
 6. **Non-distributive version** - wrap in tuple to prevent distribution
 7. **Foundation for advanced types** - essential for utility types
 8. **Zero runtime cost** - all resolved at compile time
+
+---
+
+## Lecture 131: The `infer` Keyword
+
+### Overview
+The `infer` keyword is **one of TypeScript's most powerful type features** - it lets you **extract and capture type information** from complex patterns at compile time, similar to how destructuring works at runtime!
+
+### What is `infer`?
+
+`infer` allows you to **declare a type variable** that gets bound when a conditional type matches:
+
+```typescript
+// Basic syntax with infer
+type ExtractType<T> = T extends Promise<infer R> ? R : never;
+
+type Result = ExtractType<Promise<string>>;  // string
+```
+
+### How Infer Works
+
+When the pattern matches, `infer R` captures the type inside the Promise:
+
+```typescript
+// Step by step:
+// 1. T = Promise<string>
+// 2. Promise<string> extends Promise<infer R> ? R : never
+// 3. Pattern matches! R = string
+// 4. Result: string
+```
+
+### Key Rule: Only Used in `extends` Clauses
+
+```typescript
+// ✅ Correct - used in conditional typeextends clause
+type ExtractType<T> = T extends Promise<infer R> ? R : never;
+
+// ❌ Incorrect - can't use outside conditional types
+type BadType = infer R;  // Error!
+```
+
+### Multiple `infer` in One Pattern
+
+You can extract multiple types from a single pattern:
+
+```typescript
+type ExtractPair<T> = T extends [infer First, infer Second] 
+  ? [First, Second] 
+  : never;
+
+type Result = ExtractPair<[string, number]>;
+// [string, number]
+```
+
+### Extract Return Types
+
+```typescript
+type ReturnType<T> = T extends (...args: any[]) => infer R ? R : never;
+
+type GetUser = () => { name: string; age: number };
+type User = ReturnType<GetUser>;  // { name: string; age: number }
+```
+
+### Extract Instance Types
+
+```typescript
+type InstanceType<T> = T extends new (...args: any[]) => infer R ? R : never;
+
+class Person {
+  name: string = "John";
+}
+
+type PersonInstance = InstanceType<typeof Person>;  // Person
+```
+
+### Extract Array Element Types
+
+```typescript
+type ElementType<T> = T extends (infer E)[] ? E : never;
+
+type NumArray = ElementType<number[]>;       // number
+type StrTuple = ElementType<[string, number]>; // string | number
+```
+
+### Advanced: Chained Inference
+
+You can chain infer for nested extractions:
+
+```typescript
+type AsyncReturnType<T> = T extends (...args: any[]) => infer R
+  ? R extends Promise<infer U> ? U : R
+  : never;
+
+type AsyncFn = () => Promise<string>;
+type SyncFn = () => string;
+
+type AsyncResult = AsyncReturnType<AsyncFn>;  // string
+type SyncResult = AsyncReturnType<SyncFn>;    // string
+```
+
+### Pattern Matching with Template Literals
+
+`infer` works beautifully with template literal types:
+
+```typescript
+// Extract event type from message format
+type GetEventType<T> = T extends `${infer Event}:${string}` ? Event : never;
+
+type ClickEvent = GetEventType<"click:button:hover">;  // "click"
+type KeyboardEvent = GetEventType<"keyboard:keydown">;  // "keyboard"
+```
+
+### Partial Pattern Matching
+
+You don't have to capture everything:
+
+```typescript
+type GetBaseName<T extends string> = T extends `${infer Base}-suffix` ? Base : T;
+
+type Result1 = GetBaseName<"hello-suffix">;  // "hello"
+type Result2 = GetBaseName<"world">;        // "world" (no suffix, return original)
+```
+
+### Why the `infer` Keyword Matters
+
+1. **Type extraction at compile time** - No runtime overhead
+2. **Pattern matching** - Extract specific parts of complex types
+3. **Foundation for utilities** - Enables ReturnType, InstanceType, etc.
+4. **Zero runtime cost** - All resolved during type checking
+5. **Powerful with conditional types** - Combines with extends for flexibility
+
+### Common Patterns with `infer`
+
+```typescript
+// 1. Extract first element of tuple
+type First<T> = T extends [infer First, ...any[]] ? First : never;
+
+// 2. Extract last element of tuple
+type Last<T> = T extends [...any[], infer Last] ? Last : never;
+
+// 3. Make array element type stricter
+type ImmutableArray<T> = readonly T[] & { length: number };
+
+// 4. Union distribution with infer
+type ElementOf<T> = T extends (infer E)[] ? E : never;
+```
+
+### Gotchas to Remember
+
+1. **Infer only in extends clauses** - cannot use elsewhere
+2. **Captures the narrowest type** - be careful with unions
+3. **Works with distribution** - may apply to each union member
+4. **Order matters in patterns** - more specific patterns first
+
+### Key Takeaways for Lecture 131
+
+1. **`infer` captures type information** from patterns in conditional types
+2. **Syntax**: `T extends Pattern<infer Type> ? Type : never`
+3. **Only used in extends clauses** of conditional types
+4. **Combines with template literals** for string parsing
+5. **Enables utility types** like ReturnType, InstanceType
+6. **Zero runtime cost** - all resolved at compile time
+7. **Essential for advanced type manipulation** and library design
+---
+
+## Lecture 132: TypeScript's Got You Covered: Built-in Utility Types
+
+### Overview
+TypeScript ships with useful built-in utility types that **replace custom implementations** for common patterns. Most of the types you've written manually? TypeScript already provides them!
+
+### The Complete List
+
+| Type | Purpose | Built Using |
+|------|---------|-------------|
+| `Partial<T>` | Make all properties optional | Mapped Type + `?` |
+| `Required<T>` | Make all properties required | Mapped Type + `-?` |
+| `Readonly<T>` | Make all properties readonly | Mapped Type + `readonly` |
+| `Pick<T, K>` | Pick specific properties | Mapped Type on `K` |
+| `Omit<T, K>` | Omit specific properties | Pick + Exclude |
+| `Record<K, T>` | Type with keys K and values T | Mapped Type on `K` |
+| `Exclude<T, U>` | Remove types from union | Conditional + never |
+| `Extract<T, U>` | Keep types in union | Conditional + T |
+| `NonNullable<T>` | Remove null/undefined | Exclude<T, null \| undefined> |
+| `ReturnType<T>` | Extract return type | Conditional + infer |
+| `InstanceType<T>` | Extract instance type | Conditional + infer |
+| `Parameters<T>` | Extract parameter types | Conditional + infer |
+| `ConstructorParameters<T>` | Extract constructor params | Conditional + infer |
+| `ThisParameterType<T>` | Extract `this` parameter type | Conditional + infer |
+| `OmitThisParameter<T>` | Remove `this` parameter | Conditional + infer |
+
+### Key Examples
+
+#### Partial, Required, Readonly
+```typescript
+interface User { name: string; email: string; age: number; }
+
+type PartialUser = Partial<User>;  // all optional
+type RequiredUser = Required<PartialUser>;  // all required again
+type ReadonlyUser = Readonly<User>;  // all readonly
+```
+
+#### Pick & Omit
+```typescript
+type UserName = Pick<User, "name" | "email">;
+type UserNoEmail = Omit<User, "email">;
+```
+
+#### Record
+```typescript
+type CatAges = Record<"fluffy" | "ginger", number>;
+```
+
+#### Exclude & Extract
+```typescript
+type Colors = "red" | "green" | "blue" | "yellow";
+type Primary = Exclude<Colors, "yellow" | "green">;  // "red" | "blue"
+type Extracted = Extract<Colors, "red" | "blue">;  
+```
+
+#### NonNullable
+```typescript
+type NullableStr = string | null | undefied;
+type RequredStr = NonNullable<NullableStr>;  // string
+```
+
+#### ReturnType, Parameters, InstanceType
+```typescript
+type GetUser = () => Promise<{ id: number; name: string }>;
+type UserRespone = ReturnType<GetUser>;
+```
+
+### Why These Matter
+
+1. **No reinventing the wheel** - Most common patterns are already built-in
+2. **TypeScript team maintains them** - Guaranteed correct and optimized
+3. **Focus on business logic** - Don't waste time writing utility types
+4. **Widely understood** - Other developers know these immediately
+5. **Work with all types** - Fully generic for any interface/type
+
+### Key Takeaways for Lecture 132
+
+1. **TypeScript provides many built-in utility types** - don't reinvent the wheel
+2. **Most based on Mapped + Conditional types** - you've earned the foundation
+3. **Common ones**: `Partial`, `Requred`, `Readonly`, `Pick`, `Omit`, `Record`
+4. **Union manipulation**: `Exclude`, `Extract`, `NonNullable`
+5. **Function/tuple**: `ReturnType`, `Parameters`, `InstanceType`
+6. **String manipulation**: `Uppercase`, `Lowercase`, `Capitalize`, `Uncapitalize`
+7. **Know what's available** - saves time and ensures consistency
+8. **Focus on business logic** - TypeScript handles the common transformations
