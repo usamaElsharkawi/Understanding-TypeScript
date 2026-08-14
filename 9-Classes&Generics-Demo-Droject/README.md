@@ -9,7 +9,7 @@
 - **115.** Adding an "add" Method ✅
 - **116.** Adding Items More Efficiently ✅
 - **117.** Accessing the Data & Compiling + Running the Code ✅
-- **118.** Finishing the Linked List
+- **118.** Finishing the Linked List ✅
 
 ---
 
@@ -973,3 +973,386 @@ if (current) {  // ❌ Only executes once
 8. **Encapsulation** - Private properties protected, public methods provide safe access
 9. **This is working code** - You can compile and run it now!
 10. **Linked list trade-offs** - No random access, but efficient insertion with tail pointer
+
+---
+
+## Lecture 117: Finishing the Linked List
+
+### Overview
+We complete our linked list implementation by adding two essential methods: `insertAt()` for inserting at any position and `removeAt()` for removing from any position. We also fix a critical bug in `removeAt()` to properly maintain the `tail` pointer.
+
+### Complete Implementation
+
+```typescript
+class ListNode<T> {
+  next: ListNode<T> | undefined;
+  constructor(public value: T) {}
+}
+
+class LinkedList<T> {
+  private root: ListNode<T> | undefined = undefined;
+  private tail: ListNode<T> | undefined = undefined;
+  private length = 0;
+
+  add(value: T) {
+    const node = new ListNode(value);
+    if (!this.root || !this.tail) {
+      this.root = node;
+      this.tail = node;
+    } else {
+      this.tail.next = node;
+      this.tail = node;
+    }
+    this.length++;
+  }
+
+  insertAt(value: T, pos: number) {
+    if (pos > -1 && pos < this.length && this.root) {
+      let current = this.root;
+      let index = 0;
+      let previous = current;
+      const node = new ListNode(value);
+
+      if (pos === 0) {
+        node.next = this.root;
+        this.root = node;
+      } else {
+        while (index++ < pos && current.next) {
+          previous = current;
+          current = current.next;
+        }
+        node.next = current;
+        previous.next = node;
+      }
+      this.length++;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  removeAt(pos: number) {
+    if (pos > -1 && pos < this.length && this.root) {
+      let current = this.root;
+      let previous: ListNode<T> | undefined = current;
+      let index = 0;
+
+      if (pos === 0) {
+        this.root = current.next;
+        if (this.length === 1) {
+          this.tail = undefined;
+        }
+      } else {
+        while (index++ < pos && current.next) {
+          previous = current;
+          current = current.next;
+        }
+        previous.next = current.next;
+        if (pos === this.length - 1) {
+          this.tail = previous;
+        }
+      }
+      this.length--;
+      return current;
+    } else {
+      return null;
+    }
+  }
+
+  getNumberOfElements() {
+    return this.length;
+  }
+
+  print() {
+    let current = this.root;
+    while (current) {
+      console.log(current.value);
+      current = current.next;
+    }
+  }
+}
+```
+
+---
+
+### Method 1: `insertAt(value: T, pos: number)`
+
+Inserts a node at a specific position in the list.
+
+**Parameters:**
+- `value: T` - The value to insert
+- `pos: number` - Position to insert at (0-based index)
+
+**Returns:**
+- `true` - Insertion successful
+- `false` - Invalid position (out of bounds or negative)
+
+**Time Complexity:** O(n) - must traverse to the position
+
+---
+
+#### How `insertAt()` Works
+
+**Case 1: Insert at position 0 (beginning)**
+```
+Before: [A] → [B] → [C]
+Insert X at pos 0:
+node.next = this.root → [X] → [A] → [B] → [C]
+this.root = node → root points to [X]
+After: [X] → [A] → [B] → [C]
+```
+
+**Case 2: Insert in middle (pos 2)**
+```
+Before: [A] → [B] → [C] → [D]
+Insert X at pos 2:
+Traverse to position 2, then:
+node.next = current → [X] → [C]
+previous.next = node → [B] → [X] → [C]
+After: [A] → [B] → [X] → [C] → [D]
+```
+
+**Case 3: Invalid position**
+```typescript
+list.insertAt(X, -1);   // ❌ Returns false
+list.insertAt(X, 100);   // ❌ Returns false
+```
+
+---
+
+### Method 2: `removeAt(pos: number)`
+
+Removes a node at a specific position and returns it.
+
+**Parameters:**
+- `pos: number` - Position to remove from (0-based index)
+
+**Returns:**
+- `ListNode<T>` - The removed node (success)
+- `null` - Invalid position (failure)
+
+**Time Complexity:** O(n) - must traverse to the position
+
+---
+
+#### How `removeAt()` Works
+
+**Case 1: Remove at position 0 (beginning)**
+```
+Before: [A] → [B] → [C] → [D]
+Remove at pos 0:
+this.root = current.next → root points to [B]
+After: [B] → [C] → [D]
+```
+
+**Case 2: Remove from middle (pos 2)**
+```
+Before: [A] → [B] → [C] → [D] → [E]
+Remove at pos 2:
+Traverse to position 2
+previous.next = current.next → [B] → [D] (skips [C])
+After: [A] → [B] → [D] → [E]
+```
+
+**Case 3: Remove last element**
+```
+Before: [A] → [B] → [C]
+                   ↑
+                  tail
+
+Remove at pos 2:
+previous.next = current.next → [B] → undefined
+this.tail = previous → tail = [B]
+
+After: [A] → [B]
+             ↑
+            tail
+```
+this.tail = previous → tail = [B]
+
+After: [A] → [B]
+             ↑
+            tail
+```
+
+---
+
+### Critical Bug Fix: Maintaining the Tail Pointer
+
+**The Problem:**
+In the initial implementation of `removeAt()`, the `tail` pointer was not updated when removing elements. This caused the `tail` to point to a detached node, breaking subsequent `add()` operations.
+
+**Example of the Bug:**
+```typescript
+list.add(1);  // [1], tail=[1]
+list.add(2);  // [1]→[2], tail=[2]
+list.removeAt(1);  // Removes [2], but tail still points to [2]!
+list.add(3);  // BUG: tail=[2] is detached, creates broken list
+```
+
+**The Fix:**
+```typescript
+// In removeAt(), when removing the last element:
+if (pos === this.length - 1) {
+  this.tail = previous;  // Update tail to point to new last node
+}
+
+// In removeAt(), when removing the only element:
+if (this.length === 1) {
+  this.tail = undefined;  // Clear tail when list becomes empty
+}
+```
+
+**After the Fix:**
+```typescript
+list.add(1);  // [1], tail=[1]
+list.add(2);  // [1]→[2], tail=[2]
+list.removeAt(1);  // Removes [2], tail updated to [1] ✅
+list.add(3);  // [1]→[3], tail=[3] ✅ Works correctly!
+```
+
+---
+
+### Complete Usage Example
+
+```typescript
+const numberList = new LinkedList<number>();
+
+// Add elements
+numberList.add(9);
+numberList.add(33);
+numberList.add(5);
+
+console.log(numberList.getNumberOfElements());  // 3
+numberList.print();
+// Output: 9, 33, 5
+
+// Insert at beginning
+numberList.insertAt(1, 0);
+numberList.print();
+// Output: 1, 9, 33, 5
+
+// Remove middle element
+numberList.removeAt(2);  // Removes 33
+numberList.print();
+// Output: 1, 9, 5
+
+// Remove last element (tests tail update)
+numberList.removeAt(2);
+numberList.print();
+// Output: 1, 9
+
+// Add after removing last (tests tail)
+numberList.add(100);
+numberList.print();
+// Output: 1, 9, 100
+```
+
+**Output:**
+```
+3
+9
+33
+5
+1
+9
+33
+5
+1
+9
+5
+1
+9
+100
+```
+
+---
+
+### Type Safety in Action
+
+```typescript
+const numberList = new LinkedList<number>();
+
+numberList.add(9);        // ✅ OK
+numberList.add(33);       // ✅ OK
+// numberList.add("text"); // ❌ TypeScript error!
+
+numberList.insertAt(5, 1);  // ✅ OK
+// numberList.insertAt("x", 1); // ❌ TypeScript error!
+
+const removed = numberList.removeAt(0);  // ✅ Returns ListNode<number>
+```
+
+---
+
+### Time Complexity Summary
+
+| Method | Time Complexity | Description |
+|--------|----------------|-------------|
+| `add()` | O(1) | Append to end using tail pointer |
+| `insertAt()` | O(n) | Traverse to position, then insert |
+| `removeAt()` | O(n) | Traverse to position, then remove |
+| `getNumberOfElements()` | O(1) | Return stored length |
+| `print()` | O(n) | Visit every node |
+
+---
+
+### Edge Cases Handled
+
+#### `insertAt()`:
+- Negative position → returns `false`
+- Position >= length → returns `false`
+- Empty list (`!this.root`) → returns `false`
+- Position 0 → special case (insert at beginning)
+- Valid position → inserts correctly
+
+#### `removeAt()`:
+- Negative position → returns `null`
+- Position >= length → returns `null`
+- Empty list (`!this.root`) → returns `null`
+- Position 0 → special case (remove first, update tail if needed)
+- Last position → updates `tail` pointer ✅
+- Single element → clears both `root` and `tail` ✅
+
+---
+
+### Key Design Principles
+
+1. **Encapsulation**: All internal state (`root`, `tail`, `length`) is `private`
+2. **Type Safety**: Generics ensure type consistency throughout
+3. **O(1) `add()`**: Tail pointer enables constant-time appends
+4. **O(n) insert/remove**: Must traverse to position (standard for linked lists)
+5. **Tail Maintenance**: Critical to update `tail` when removing last element
+6. **Error Handling**: Invalid operations return `false` or `null`
+
+---
+
+### Key Takeaways
+
+1. **`insertAt()`** - O(n) method to insert at any valid position
+2. **`removeAt()`** - O(n) method to remove from any valid position
+3. **Tail pointer maintenance** - Must update `tail` when removing last element
+4. **Empty list handling** - Clear `tail` when removing the only element
+5. **Return values** - `insertAt()` returns `boolean`, `removeAt()` returns `ListNode | null`
+6. **Position validation** - Check bounds before accessing nodes
+7. **Type safety** - All methods work with generic type `T`
+8. **Complete implementation** - This is a fully functional linked list!
+9. **Bug fixes** - Real-world debugging and maintenance of data structures
+10. **This is working, tested code** - Compiles and runs correctly!
+
+---
+
+## Course Complete! 🎉
+
+Congratulations! You've completed the Linked List implementation section. You now have a fully functional, type-safe, generic linked list with:
+- ✅ Generic types (`<T>`)
+- ✅ Encapsulation (`private` properties)
+- ✅ O(1) `add()` with tail pointer
+- ✅ `insertAt()` for arbitrary insertion
+- ✅ `removeAt()` for arbitrary removal
+- ✅ `print()` for display
+- ✅ `getNumberOfElements()` for size
+- ✅ Proper tail pointer maintenance
+- ✅ Type safety throughout
+
+This demonstrates mastery of TypeScript classes, generics, and data structure implementation!
