@@ -7,7 +7,7 @@
 - **120.** "typeof" & A More Useful Example ✅
 - **121.** Another Great Use-case for "typeof" ✅
 - **122.** Extracting Keys with "keyof" ✅
-- **123.** "keyof" & A More Useful Example
+- **123.** "keyof" & A More Useful Example ✅
 - **124.** Understanding Indexed Access Types
 - **125.** Accessing Array Elements with Indexed Access Types
 - **126.** Introducing Mapped Types
@@ -181,3 +181,224 @@ function getProperty(obj: User, key: UserKeys) {
 - Type-safe property access
 - Prevents typos in property names
 - Enables generic functions that work with any object
+
+---
+
+## Lecture 123: "keyof" & A More Useful Example
+
+### Overview
+Lecture 123 takes `keyof` to the next level by combining it with **generic type constraints** (`extends`). We create type-safe utility functions that can access object properties dynamically while maintaining full compile-time type safety.
+
+### The Core Pattern: Generics + `keyof`
+
+```typescript
+function getProp<T extends object, U extends keyof T>(obj: T, key: U): T[U] {
+  const val = obj[key];
+  return val;
+}
+```
+
+### Breaking Down the Constraint
+
+| Part | What it means |
+|------|---------------|
+| `<T extends object>` | First type parameter: MUST be an object type |
+| `, K extends keyof T>` | Second type parameter: MUST be a key of T |
+| `obj: T` | The actual object to read from |
+| `key: K` | The property name (restrained to valid keys of T) |
+| `: T[K]` | Return type - TypeScript infers the exact property type |
+
+---
+
+### How It Works
+
+```typescript
+const user = {
+  name: "usama",
+  age: 30,
+  email: "test@example.com"
+};
+
+// When we call getProp(user, "name"):
+// T is inferred as { name: string; age: number; email: string }
+// K is inferred as "name"
+// keyof T gives us: "name" | "age" | "email"
+// K = "name" is a subset of keyof T ✅
+
+const name = getProp(user, "name");   // ✅ Returns type: string
+const age = getProp(user, "age");     // ✅ Returns type: number
+// const xyz = getProp(user, "xyz");   // ❌ Error: "xyz" is not a key of user
+```
+
+---
+
+### The `extends` Keyword in Generics
+
+In the context of generic constraints, `extends` **restricts** what types can be used as type arguments:
+
+```typescript
+// ❌ Without constraint - T can be ANY type
+function getRandomElement<T>(array: T[]): T {
+  return array[0];
+}
+
+// ✅ With constraint - T MUST extend 'object'
+function getObjectProperty<T extends object, K extends keyof T>(obj: T, key: K) {
+  return obj[key];
+}
+```
+
+**Common Generic Constraints:**
+
+```typescript
+// Constraint: must extend string
+function formatString<T extends string>(input: T): string {
+  return input.toUpperCase();
+}
+
+// Constraint: must extend object
+function getKeys<T extends object>(obj: T): string[] {
+  return Object.keys(obj);
+}
+
+// Constraint: must have a 'length' property
+function logLength<T extends { length: number }>(input: T): void {
+  console.log(input.length);
+}
+
+logLength("hello");    // ✅ string has length
+logLength([1, 2, 3]);  // ✅ array has length
+// logLength(42);       // ❌ number doesn't have length
+```
+
+---
+
+### Practical Example from Our Code
+
+```typescript
+type User = { name: string; age: number };
+
+function getProp<T extends object, U extends keyof T>(obj: T, key: U): T[U] {
+  const val = obj[key];
+  
+  if (val === undefined || val === null) {
+    throw new Error("Accessing undefined or null");
+  }
+  
+  return val;
+}
+
+const user = { name: "usama", age: 33 };
+const age = getProp(user, 'age');  // Returns type: number
+console.log(age);  // 33
+```
+
+---
+
+### Using `keyof` with Types
+
+```typescript
+type User = { name: string; age: number };
+
+// keyof extracts a union of all keys
+type UserKeys = keyof User;  // "name" | "age"
+
+// Now you can use this union type
+const validKey: UserKeys = "age";  // ✅ Valid
+// const invalidKey: UserKeys = "email";  // ❌ Error: "email" not in UserKeys
+```
+
+---
+
+### Type-Safe Property Access Patterns
+
+#### Pattern 1: Generic with keyof constraint
+```typescript
+function pluck<T, K extends keyof T>(array: T[], key: K): T[K][] {
+  return array.map(item => item[key]);
+}
+
+const users = [
+  { name: "Alice", age: 25 },
+  { name: "Bob", age: 30 }
+];
+
+const names = pluck(users, "name");  // Returns: string[]
+const ages = pluck(users, "age");    // Returns: number[]
+```
+
+#### Pattern 2: keyof with typeof
+```typescript
+const settings = {
+  difficulty: "easy",
+  minLevel: 10,
+  didStart: false,
+  players: ["John", "Jane"]
+};
+
+type Settings = typeof settings;
+
+function getSetting<K extends keyof Settings>(key: K): Settings[K] {
+  return settings[key];
+}
+
+getSetting("difficulty");  // Returns: string
+getSetting("minLevel");    // Returns: number
+```
+
+---
+
+### Why This Is Powerful
+
+1. **Type Safety**: Compile-time enforcement of valid property names
+2. **Auto-complete**: IDE knows all valid keys
+3. **Return Type Inference**: TypeScript infers exact return type
+4. **Code Reuse**: One function works with any object type
+5. **Refactoring Safety**: Renaming properties shows errors everywhere
+
+---
+
+### Key Differences: `typeof` vs `keyof`
+
+| Feature | `typeof` | `keyof` |
+|---------|----------|---------|
+| Purpose | Extracts type from a value | Extracts keys from a type |
+| Input | Runtime value | Compile-time type |
+| Output | Type | Union of string/number keys |
+| Usage | `type X = typeof variable` | `type X = keyof SomeType` |
+
+---
+
+### Common Mistakes
+
+#### ❌ Mistake 1: No constraint on `keyof T`
+```typescript
+function getProp<T>(obj: T, key: keyof T) {
+  return obj[key];  // Might not type-check correctly
+}
+```
+
+#### ❌ Mistake 2: Wrong constraint order
+```typescript
+function getProp<K extends keyof T, T>(obj: T, key: K) {  // ❌ K before T!
+}
+```
+
+#### ✅ Correct:
+```typescript
+function getProp<T extends object, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+```
+
+---
+
+### Key Takeaways
+
+1. **`extends` in generics** = constraint, not inheritance (in this context)
+2. **`keyof T`** = union of all property keys of type T
+3. **`T[K]`** = look up the type of property K in type T
+4. **Generic constraints** enable type-safe, reusable functions
+5. **Type inference** works automatically - TypeScript infers T and K
+6. **Compile-time only** - no runtime performance cost
+7. **IDE support** - full autocomplete and type checking
