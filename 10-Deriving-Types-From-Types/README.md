@@ -10,8 +10,8 @@
 - **123.** "keyof" & A More Useful Example ✅
 - **124.** Understanding Indexed Access Types ✅
 - **125.** Accessing Array Elements with Indexed Access Types ✅
-- **126.** Introducing Mapped Types
-- **127.** Readonly Types & Optional Mapping
+- **126.** Introducing Mapped Types ✅
+- **127.** Readonly Types & Optional Mapping ✅
 - **128.** Exploring Template Literal Types
 - **129.** Introducing Conditional Types
 - **130.** Conditional Types - Another Example
@@ -817,4 +817,67 @@ type UserRole = User["role"];      // "admin" | "user"
 5. **Works with tuples, arrays, and arrays of objects**
 6. **Enables type-safe generic functions** like `pluck`, `firstElement`
 7. **Auto-syncs with source types** - no manual maintenance**
-8. **Essential for working with nested data structures**
+3. **Key Takeaways for Lecture 126**
+
+1. **Mapped types iterate over object properties**
+2. **Syntax**: `{ [Key in keyof T]: Transformation }`
+3. **`keyof` provides the keys to iterate**
+4. **Built-in types**: `Partial`, `Readonly`, `Pick`, `Record`
+5. **Practical use cases**: partial updates, readonly views, type transformations
+6. **No runtime code** - all transformations happen at compile time
+
+---
+
+## Lecture 127: Readonly Types & Optional Mapping
+
+### Overview
+This lecture focuses on two essential modifiers in mapped types: `readonly` and `?`. These modifiers give you fine-grained control over how types are transformed.
+
+### Readonly Modifier
+
+The `readonly` modifier makes properties immutable:
+
+```typescript
+type Readonly<T> = {
+  readonly [P in keyof T]: T[P];
+};
+```
+
+**Example 1**: Making properties readonly
+**Example 2**: Combining with optional mapping:
+```typescript
+type ImmutablePartial<T> = {
+  readonly [P in keyof T]?: T[P];
+};
+```
+
+**Example 3**: Removing readonly with `-`:
+```typescript
+type Mutable<T> = {
+  -[readonly] [P in keyof T]: T[P];
+};
+```
+
+### Practical Examples
+
+**Form handling**:
+```typescript
+interface UserForm { name: string; email: string; }
+type FormState = Partial<UserForm> & { submit: () => void; };
+```
+
+**API response handling**:
+```typescript
+interface APIResponse { data: any; error: string | null; loading: boolean; }
+type ReadAPIResponse = Readonly<APIResponse>;
+```
+
+### Key Takeaways for Lecture 127
+
+1. **`readonly` modifier** prevents property modification
+2. **`?` modifier** makes properties optional
+3. **Both are used in mapped types** for type transformation
+4. **Common utilities**: `Readonly<T>`, `Partial<T>`
+5. **Real-world applications**: forms, validation, API responses
+6. **Modifiers can be combined** to create sophisticated types
+7. **Understanding these is key** to advanced TypeScript patterns
