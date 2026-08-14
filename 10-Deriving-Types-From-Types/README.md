@@ -12,7 +12,7 @@
 - **125.** Accessing Array Elements with Indexed Access Types ✅
 - **126.** Introducing Mapped Types ✅
 - **127.** Readonly Types & Optional Mapping ✅
-- **128.** Exploring Template Literal Types
+- **128.** Exploring Template Literal Types ✅
 - **129.** Introducing Conditional Types
 - **130.** Conditional Types - Another Example
 - **131.** Making Sense of the "infer" Keyword
@@ -881,3 +881,160 @@ type ReadAPIResponse = Readonly<APIResponse>;
 5. **Real-world applications**: forms, validation, API responses
 6. **Modifiers can be combined** to create sophisticated types
 7. **Understanding these is key** to advanced TypeScript patterns
+---
+
+## Lecture 128: Exploring Template Literal Types
+
+### Overview
+Template literal types are **one of TypeScript's most powerful features** for string manipulation at the **type level**. They let you create new types by combining string patterns using template syntax.
+
+### Basic Syntax
+
+```typescript
+type TPipeline = `${T} Pipeline`;
+```
+
+This creates a new string literal type that combines values with templates - similar to string interpolation but at compile time.
+
+### Simple Examples
+
+```typescript
+type EventName = `click` | `hover` | `focus`;
+type Action = `${EventName} ${string}`;
+
+// Valid examples:
+type Valid1 = "click button";     // ✅ Matches pattern
+type Valid2 = "hover mouse";      // ✅ Matches pattern
+type Valid3 = "focus input";      // ✅ Matches pattern
+
+// Invalid - doesn't match any event:
+// type Invalid = "scroll";       // ❌ Error!
+```
+
+### String Literal Type Manipulation
+
+#### Extract File Extension
+```typescript
+type GetExtension<T extends string> = 
+  T extends `${string}.${infer Ext}` ? Ext : never;
+
+type Ext1 = GetExtension<"document.md">;  // "md"
+type Ext2 = GetExtension<"image.png">;    // "png"
+type Ext3 = GetExtension<"noextension">;  // never
+```
+
+#### Parse File Path
+```typescript
+type ParsePath<T extends string> = 
+  T extends `${infer Dir}/${infer File}` 
+  ? { dir: Dir; file: File }
+  : { dir: ""; file: T };
+
+type Path1 = ParsePath<"src/components/App.js">;
+// { dir: "src/components"; file: "App.js" }
+
+type Path2 = ParsePath<"README.md">;
+// { dir: ""; file: "README.md" }
+```
+
+### Practical Patterns
+
+#### 1. CSS Class Names
+```typescript
+type Color = "primary" | "secondary" | "danger";
+type Size = "sm" | "md" | "lg";
+type ButtonClass = `btn-${Color}-${Size}`;
+
+// Creates all combinations:
+// "btn-primary-sm" | "btn-primary-md" | "btn-primary-lg" |
+// "btn-secondary-sm" | "btn-secondary-md" | "btn-secondary-lg" |
+// "btn-danger-sm" | "btn-danger-md" | "btn-danger-lg"
+```
+
+#### 2. Environment Variables
+```typescript
+type EnvVar = "API_URL" | "DB_HOST" | "CACHE_TTL";
+type PublicEnv = `NEXT_PUBLIC_${EnvVar}`;
+
+// "NEXT_PUBLIC_API_URL" | "NEXT_PUBLIC_DB_HOST" | "NEXT_PUBLIC_CACHE_TTL"
+```
+
+#### 3. API Endpoints
+```typescript
+type Endpoint = "users" | "posts" | "comments";
+type ApiUrl = `/api/${Endpoint}`;
+
+// "/api/users" | "/api/posts" | "/api/comments"
+```
+
+#### 4. Event Naming Convention
+```typescript
+type ButtonSize = "sm" | "md" | "lg";
+type EventName = `button-${ButtonSize}Clicked`;
+
+// "button-smClicked" | "button-mdClicked" | "button-lgClicked"
+```
+
+### String Parsing with Infer
+
+#### Split Strings
+```typescript
+type Split<T extends string, D extends string> = 
+  T extends `${infer L}${D}${infer R}` ? 
+  [L, ...Split<R, D>] : 
+  [T];
+
+type Parts = Split<"a-b-c", "-">;  // ["a", "b", "c"]
+```
+
+#### Extract Protocol
+```typescript
+type ExtractProtocol<T extends string> = 
+  T extends `${infer Protocol}://${infer Rest}` 
+  ? Protocol 
+  : never;
+
+type Http = ExtractProtocol<"http://example.com">;  // "http"
+type Https = ExtractProtocol<"https://example.com">; // "https"
+```
+
+### Built-in String Helpers
+
+TypeScript provides these template literal type helpers:
+
+```typescript
+type Capitalized = Capitalize<"hello">;    // "Hello"
+type Uncapitalized = Uncapitalize<"Hello">; // "hello"
+type Upper = Uppercase<"hello">;            // "HELLO"
+type Lower = Lowercase<"HELLO">;            // "hello"
+```
+
+### Why Template Literal Types Matter
+
+1. **Type-safe string patterns** - Catch errors at compile time instead of runtime
+2. **Generate unions automatically** - No need to manually list every combination
+3. **Parse strings at compile time** - Extract information from type names
+4. **IDE autocomplete support** - Shows valid completions as you type
+5. **Zero runtime cost** - All template literal types are erased after compilation
+
+### Common Use Cases
+
+1. **Form handling** - Generate type-safe event handlers
+2. **CSS-in-JS** - Type-safe class name generation
+3. **API routing** - Type-safe URL construction
+4. **Configuration** - Environment variable naming conventions
+5. **Code generation** - Generate file names, identifiers dynamically
+6. **State machines** - Event name patterns and validation
+
+### Key Takeaways for Lecture 128
+
+1. **Template literals at type level** - not runtime string operations
+2. **Syntax**: `` `${StaticPart}-${T}` `` combines strings with type variables
+3. **Work with `infer`** to parse and extract information from strings
+4. **Generate unions automatically** from type combinations
+5. **Built-in helpers**: `Capitalize`, `Uncapitalize`, `Uppercase`, `Lowercase`
+6. **IDE autocomplete** shows valid pattern completions
+7. **Error detection at compile time** for invalid string patterns
+8. **Zero runtime overhead** - all erased after type checking
+9. **Essential for advanced TypeScript** patterns and library design
+10. **Works with conditional types** for sophisticated string manipulation

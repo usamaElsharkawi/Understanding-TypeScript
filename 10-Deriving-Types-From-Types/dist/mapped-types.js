@@ -1,5 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// type Operations = {
+//   add?: (a: number, b: number) => number;
+//   subtract?: (a: number, b: number) => number;
+// };
+// type Results<T> = {
+//   [K in keyof T]-?: number;
+// };
 const mathOperations = {
     add(a, b) {
         return a + b;

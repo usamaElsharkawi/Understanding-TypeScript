@@ -4,8 +4,18 @@ type Operations = {
 };
 
 type Results<T> = {
-  [K in keyof T]: number;
+  [K in keyof T]?: number;
 };
+
+
+// type Operations = {
+//   add?: (a: number, b: number) => number;
+//   subtract?: (a: number, b: number) => number;
+// };
+
+// type Results<T> = {
+//   [K in keyof T]-?: number;
+// };
 
 const mathOperations: Operations = {
   add(a: number, b: number) {
