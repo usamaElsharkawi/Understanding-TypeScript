@@ -185,3 +185,64 @@ By the end of this section, you'll be able to:
 5. **Setter Decorators** - Intercept property writes
 Each type targets a different granularity level of your objects, from the whole class down to individual property accesses.
 ---
+## Lecture 136: Building a First Decorator
+
+### Overview
+Learn how to create your first decorator from scratch - the foundation for all other decorator types.
+
+### Creating a Simple Decorator
+
+```typescript
+// A simple class decorator
+function printClassName(target: Function) {
+  console.log("Class name: " + target.name);
+}
+
+// Usage
+@printClassName
+class MyClass {
+  // ...
+}
+
+// Output: "Class name: MyClass"
+```
+
+### How Decorators Work
+
+1. **Decorator function** receives the **target** as a parameter
+2. **Returns** a modified version or the original
+3. **Applied at design time** before instantiation
+4. **Can modify** the target or add new properties
+
+### Key Rules
+
+1. **Class decorator** receives the constructor function
+2. **Must return** the constructor (or a replacement)
+3. **Other types** receive different parameters based on their target
+4. **All decorators** are functions that take specific arguments
+
+### Practical Example: Simple Logger
+
+```typescript
+function Logger(target: Function) {
+  console.log(`Creating class: ${target.name}`);
+}
+
+@Logger
+class User {
+  constructor() {
+    console.log("User created");
+  }
+}
+
+// Console output:
+// Creating class: User
+// User created (when instantiated)
+```
+
+### Why Start Simple
+
+- Understand the **basic mechanism**
+- Learn **parameter types** for each decorator
+- Build foundation for **complex decorators**
+- Debugging is easier with simple examples
