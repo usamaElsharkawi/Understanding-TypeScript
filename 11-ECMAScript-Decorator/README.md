@@ -40,6 +40,108 @@ Section 11 focuses on **ECMAScript Decorators** - one of the most exciting and p
 - **Readability** - Declarative syntax is easier to understand
 - **Industry adoption** - Used in Angular, NestJS, and many libraries
 
+### Decorators vs the Decorator Design Pattern
+
+**Great question!** This is something that confuses lots of people, so let's break it down clearly.
+
+#### The Short Answer:
+
+> **Same goal, different tools.**
+
+The Decorator Design Pattern (from the 1990s) and TypeScript Decorators (language feature) solve the same problem: "How do I add behavior to objects without modifying their code?" But they go about it differently.
+
+#### The Detailed Comparison:
+
+| Aspect | Decorator Design Pattern | TypeScript Decorators |
+|--------|-------------------------|----------------------|
+| **When** | Runtime (program runs) | Compile-time (tsc runs) |
+| **Syntax** | `new MilkDecorator(coffee)` | `@MilkDecorator` above class |
+| **Who writes the wrapper** | You write the wrapping code | TypeScript generates it |
+| **Flexibility** | Very flexible, runtime | Less flexible, compile-time |
+| **When it was invented** | 1994 (Gang of Four) | 2015+ (TC39/TypeScript) |
+| **Language support** | Any OOP language (Java, C#, Python, etc.) | TypeScript/JavaScript only |
+| **Runtime overhead** | Yes, happens every time | No, erased after compilation |
+
+#### The History (Why They Share a Name):
+
+1. **1994** - Gang of Four publishes "Design Patterns" book, introducing the Decorator Pattern
+2. **2015-2017** - JavaScript community asks: "Wouldn't it be great if JS had this pattern built-in?"
+3. **Result** - They created **Decorators** as a language feature, borrowing the name because it solves the same problem
+
+#### Human Analogy:
+
+| Decorator Design Pattern | TypeScript Decorator |
+|-------------------------|---------------------|
+| Building a house where you can add rooms later | Stamping labels on products before they're made |
+| You manually add each room | The stamp is applied automatically |
+| You can add/remove rooms anytime | The label is fixed when stamped |
+| Works in any house (language) | Only works in TypeScript |
+
+#### Code Comparison:
+
+**Design Pattern approach:**
+```typescript
+// You write this manually
+class Coffee { /* ... */ }
+class MilkDecorator extends Coffee {
+  constructor(private coffee: Coffee) {
+    super();
+  }
+  cost() { return this.coffee.cost() + 2; }
+}
+
+// Usage
+const myCoffee = new MilkDecorator(new Coffee());
+```
+
+**TypeScript Decorator approach:**
+```typescript
+// You just add @ syntax
+function MilkDecorator(target: any) {
+  // TypeScript generates the wrapper automatically
+  target.cost = function() { return 7; }; // 5 base + 2 milk
+}
+return target;
+}
+
+// Usage
+@MilkDecorator
+class Coffee { /* ... */ }
+```
+
+#### When to Use Which?
+
+| Situation | Use Design Pattern | Use TS Decorator |
+|-----------|-------------------|------------------|
+| Need runtime flexibility | ✅ | ❌ |
+| Want concise, clean code | ❌ | ✅ |
+| Building a framework/library | ✅ | ✅ (but pattern is more flexible) |
+| Adding features to your app | ❌ | ✅ |
+| Need to support multiple languages | ✅ | ❌ |
+
+#### Key Takeaways:
+
+1. **They're cousins, not twins** - Same problem, different solutions
+2. **TS decorators are easier** - Less code, but less flexible
+3. **Understanding the pattern helps** - You'll use decorators better
+4. **Knowing the limitations** - TS decorators can't do everything the pattern can
+5. **You'll likely use TS decorators 90% of the time** - They're just more convenient
+
+#### Why This Matters for You:
+
+- **Understanding the pattern** helps you know what decorators are capable of
+- **Knowing the limitations** - TS decorators can't do everything the pattern can
+- **Better troubleshooting** - When a decorator doesn't work as expected, you'll know why
+- **Future-proofing** - If you switch languages, you'll understand the equivalent concept
+
+#### Bottom Line:
+
+> **The Design Pattern is the "idea". The TS Decorator is the "implementation".**
+
+You need the idea to use the implementation effectively. That's why we're covering both!
+
+---
+
 ### Prerequisites
 
 - TypeScript knowledge (intermediate level)
