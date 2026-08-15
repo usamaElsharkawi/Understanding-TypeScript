@@ -174,3 +174,14 @@ By the end of this section, you'll be able to:
 | **143** | Introducing the Field Decorator | Property/field decorators |
 | **144** | Building Configurable Decorators with Factories | Factory pattern for decorators |
 | **145** | Onwards to Experimental Decorators | Future of decorators |
+## Lecture 135: Types of Decorators
+
+## Lecture 135: Types of Decorators
+**Instructor's note:** Decorators are an Object-Oriented Programming feature that lets you modify classes, methods, properties, and getters/setters.
+1. **Class Decorators** - Modify the entire class constructor
+2. **Method Decorators** - Modify individual methods
+3. **Field Decorators** - Modify class properties
+4. **Getter Decorators** - Intercept property reads
+5. **Setter Decorators** - Intercept property writes
+Each type targets a different granularity level of your objects, from the whole class down to individual property accesses.
+---
