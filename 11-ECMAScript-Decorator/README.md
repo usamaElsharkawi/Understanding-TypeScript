@@ -7,7 +7,7 @@
 - **135.** Exploring Different Types of Decorators
 - **136.** Building a First Decorator
 - **137.** Building a Class Decorator That Edits a Class ✅
-- **138.** Understanding Decorator Code Execution Order
+- **138.** Understanding Decorator Code Execution Order ✅
 - **139.** Creating a Method Decorator
 - **140.** Using Decorators To Solve A Common Problem
 - **141.** Implementing A Decorator-based Solution: autobind
@@ -439,3 +439,91 @@ function logger(target: Function, ctx: ClassDecoratorContext) {
 7. **Real-world frameworks** (Angular, NestJS) use this exact pattern
 8. **Moving from observer to operator** is a crucial step
 
+
+---
+
+## Lecture 138: Understanding Decorator Code Execution Order
+
+### The Instructor's Point: Order Matters!
+
+Ever wonder what happens when you stack multiple decorators? Which runs first? This is crucial!
+
+### The Golden Rule: Bottom-Up Execution
+
+> **Decorators execute from bottom to top (last to first)**
+
+Think of it like onion layers:
+
+```
+🧅 d1 (outer - runs LAST)
+  🧅 d2 (middle)
+    🧅 d3 (inner - runs FIRST!)
+      MyClass
+```
+
+### Simple Example
+
+```typescript
+@d1
+@d2
+@d3
+class MyClass {}
+
+// Execution: d3 → d2 → d1 (bottom to top)
+```
+
+### Why Order Matters
+
+When you stack decorators, each one wraps the result of the previous:
+
+```typescript
+@logging       // Logs entry/exit
+@timing        // Measures execution time
+@errorHandler  // Catches errors
+expensiveOperation() { /* ... */ }
+```
+
+This ensures:
+1. Errors are caught (innermost)
+2. Timing includes everything
+3. Logging wraps everything
+
+### Code Example
+
+```typescript
+function d1(target: any) { console.log('d1'); return target; }
+function d2(target: any) { console.log('d2'); return target; }
+function d3(target: any) { console.log('d3'); return target; }
+
+@d1
+@d2
+@d3
+class MyClass {}
+
+// Console output:
+// d3  ← runs first (bottom)
+// d2  ← runs second
+// d1  ← runs last (top)
+```
+
+### Real-World Layering
+
+The most common pattern for layered decorators:
+
+```typescript
+@logging       // Logs entry/exit
+@timing        // Measures execution time
+@errorHandler  // Catches errors
+expensiveOperation() { /* ... */ }
+```
+
+### Key Takeaways for Lecture 138
+
+1. **Decorators execute bottom-up** - bottom decorator runs first
+2. **Visual vs execution order** - they are reversed!
+3. **Onion model** - innermost runs closest to code
+4. **Chaining effects** - each wraps the result of the previous
+5. **Order affects behavior** - layer order determines functionality
+6. **Debug with logs** - add console.log inside each decorator
+7. **Real apps stack decorators** - security, logging, timing, etc.
+8. **Essential for correct decorators** - order determines correctness
