@@ -13,8 +13,8 @@
 - **141.** Implementing A Decorator-based Solution: autobind ✅
 - **142.** Replacing Methods with Decorators ✅
 - **143.** Introducing the Field Decorator ✅
-- **144.** Building Configurable Decorators with Factories
-- **145.** Onwards to Experimental Decorators
+- **144.** Building Configurable Decorators with Factories ✅
+- **145.** Onwards to Experimental Decorators ✅
 
 ---
 
@@ -836,6 +836,165 @@ Field decorators work similarly but:
 - The "target" is always `undefined`
 - You return a **transformer function** instead of a replacement method
 - The transformer receives the `initialValue`
+
+---
+
+## Lecture 144: Building Configurable Decorators with Factories
+
+### Overview
+
+This lecture introduces **decorator factories** - functions that allow you to **configure decorators with parameters**.
+
+### The Problem
+
+Regular decorators are simple, but what if you want to customize behavior?
+
+#### Without Factory Pattern
+```typescript
+// Fixed behavior - always uppercases
+@uppercase
+class User { /* ... */ }
+```
+
+#### With Factory Pattern
+```typescript
+// Configurable behavior
+@repeat(3)  // Runs 3 times
+@log("User created")  // Custom log message
+@uppercase
+class User { /* ... */ }
+```
+
+### Key Concept: Decorator Factory Structure
+
+```typescript
+function myDecorator(config: any) {                    // ← Factory function
+  return function(target: any, context: any) {          // ← Actual decorator
+    // Use config here!
+    return function(initialValue) { /* ... */ };
+  }
+}
+```
+
+### Simple Example: Repeat Decorator
+
+```typescript
+function repeat(times: number) {
+  return function(
+    target: undefined, 
+    context: ClassFieldDecoratorContext
+  ) {
+    return function(initialValue: string) {
+      let result = initialValue;
+      for (let i = 0; i < times - 1; i++) {
+        result += initialValue;  // Simple repetition example
+      }
+      return result;
+    };
+  };
+}
+
+class MyClass {
+  @repeat(3)
+  name = "Hi ";  // Results in "Hi Hi Hi "
+}
+```
+
+### Real-World Examples
+
+#### 1. Validation Factory
+```typescript
+function minLength(min: number) {
+  return function(
+    target: undefined, 
+    context: ClassFieldDecoratorContext
+  ) {
+    return function(value: string) {
+      if (value.length < min) {
+        throw new Error(`${context.name} must be at least ${min} characters`);
+      }
+      return value;
+    };
+  };
+}
+
+class Form {
+  @minLength(3)
+  username = "ab";  // ❌ Error: must be at least 3 characters
+}
+```
+
+#### 2. Logging Factory
+```typescript
+function logAction(message: string) {
+  return function(
+    target: Function, 
+    context: ClassMethodDecoratorContext
+  ) {
+    return function(...args: any[]) {
+      console.log(`[${message}] Calling ${String(context.name)}`);
+      const result = target.apply(this, args);
+      console.log(`[${message}] Finished ${String(context.name)}`);
+      return result;
+    };
+  };
+}
+```
+
+### Why This Matters
+
+Decorator factories provide **reusable, configurable behavior**:
+- ✅ **Flexibility**: Same decorator, different behaviors
+- ✅ **DRY**: Don't duplicate logic for different scenarios
+- ✅ **Expressiveness**: Code clearly shows intent
+- ✅ **Type Safety**: Parameters ensure correct usage
+
+---
+
+## Lecture 145: Onwards to Experimental Decorators
+
+### Overview
+
+This final lecture is a **bridge to future learning**, explaining the difference between current decorators and what's coming.
+
+### The Two Worlds
+
+| Aspect | Current (ECMAScript Proposal) | Experimental (legacy.ts) |
+|--------|------------------------------|--------------------------|
+| **Status** | Stage 3 proposal | Legacy TypeScript feature |
+| **Syntax** | Same `@` syntax | Same `@` syntax |
+| **API** | `target, context` parameters | Traditional `(target, key, descriptor)` |
+| **Availability** | TypeScript 5.0+ | Any TypeScript version |
+| **Future** | Will become JavaScript standard | May be deprecated |
+
+### Key Differences
+
+#### Current Approach (What We've Learned)
+```typescript
+function log(target: undefined, context: ClassFieldDecoratorContext) {
+  return function(value: string) { /* ... */ };
+}
+```
+
+#### Experimental Approach
+```typescript
+function log(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  // Different parameters entirely
+}
+```
+
+### Migration Path
+
+1. **Start with current decorators** (which we've learned)
+2. **Understand the concepts** (they remain the same)
+3. **Later, learn experimental** when needed for legacy codebases
+
+### Why This Matters
+
+- ✅ **Future-proof**: What we learned is moving toward official standard
+- ✅ **Compatibility**: New codebases should use current decorators
+- ✅ **Industry alignment**: Following the direction TypeScript is going
+- ✅ **Knowledge transfer**: Concepts apply to both systems
 
 ---
 
