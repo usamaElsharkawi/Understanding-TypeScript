@@ -8,10 +8,10 @@
 - **136.** Building a First Decorator
 - **137.** Building a Class Decorator That Edits a Class ✅
 - **138.** Understanding Decorator Code Execution Order ✅
-- **139.** Creating a Method Decorator
-- **140.** Using Decorators To Solve A Common Problem
-- **141.** Implementing A Decorator-based Solution: autobind
-- **142.** Replacing Methods with Decorators
+- **139.** Creating a Method Decorator ✅
+- **140.** Using Decorators To Solve A Common Problem ✅
+- **141.** Implementing A Decorator-based Solution: autobind ✅
+- **142.** Replacing Methods with Decorators ✅
 - **143.** Introducing the Field Decorator
 - **144.** Building Configurable Decorators with Factories
 - **145.** Onwards to Experimental Decorators
@@ -527,3 +527,167 @@ expensiveOperation() { /* ... */ }
 6. **Debug with logs** - add console.log inside each decorator
 7. **Real apps stack decorators** - security, logging, timing, etc.
 8. **Essential for correct decorators** - order determines correctness
+
+## Lecture 139-142: Method Decorators - Solving the `this` Problem
+
+### Overview
+These four lectures form a cohesive unit focused on solving a **fundamental JavaScript problem**: losing `this` context when extracting methods from objects.
+
+### The Problem: Lost `this` Context
+```typescript
+class Timer {
+  seconds = 0;
+  
+  tick() {  // Method loses reference to the instance
+    this.seconds++;  // ❌ `this` is undefined!
+  }
+}
+
+const timer = new Timer();
+const tick = timer.tick;
+tick();  // ❌ Error: Cannot read property 'seconds' of undefined
+```
+
+This happens in real scenarios:
+- **Event handlers**: Button clicks, DOM events
+- **Callbacks**: setTimeout, Promise.then
+- **Array methods**: forEach, map callbacks
+- **Any time you pass a method as a function reference**
+
+### Lecture 139: Creating a Method Decorator
+#### Signature
+```typescript
+function autobind(
+  target: (...args: any[]) => any,        // Original method
+  context: ClassMethodDecoratorContext     // Metadata
+) {
+  // Can return a replacement function
+  return function(this: any, ...args: any[]) {
+    return target.call(this, ...args);   // Call with correct `this`
+  };
+}
+```
+
+#### Parameters
+| Parameter | Type | Purpose |
+|-----------|------|---------|
+| `target` | `(...args) => any` | The **original method function** |
+| `context` | `ClassMethodDecoratorContext` | **Metadata** (name, kind, addInitializer, etc.) |
+
+#### Key Rules
+1. ✅ **Class field initialization runs after decorator processing**
+2. ✅ **Methods are decorated during class definition**
+3. ✅ **Decorator receives the actual function** (target), not just metadata
+
+### Lecture 140: Using Decorators To Solve A Common Problem
+#### Real-World Example: Event Handlers
+```typescript
+class Button {
+  text = "Click me!";
+  clicks = 0;
+  
+  @autobind
+  handleClick() {
+    this.clicks++;  // ✅ `this` works correctly
+    console.log(`Clicked ${this.clicks} times`);
+  }
+}
+
+// Without @autobind:
+<button onclick={button.handleClick}>  // ❌ `this` breaks when called by DOM
+// With @autobind:
+<button onclick={button.handleClick}>  // ✅ Works perfectly
+```
+
+### Lecture 141: Implementing A Decorator-based Solution
+#### Complete Implementation
+```typescript
+function autobind(
+  target: (...args: any[]) => any,
+  context: ClassMethodDecoratorContext
+) {
+  // 🔥 CRITICAL: Add initializer for constructor-time binding
+  context.addInitializer(function(this: any) {
+    this[context.name as string] = this[context.name as string].bind(this);
+  });
+  
+  // 🔥 Return replacement function
+  return function(this: any, ...args: any[]) {
+    return target.apply(this, args);
+  };
+}
+```
+
+#### How It Works
+1. **Decorator runs at class definition**
+2. **`addInitializer` registers constructor logic**
+3. **Each instance gets bound method via `bind()`**
+4. **Replacement function calls original with correct context**
+
+#### Why Use `addInitializer` Instead of Immediate Binding
+```typescript
+// ❌ WRONG: Binds to wrong context
+@autobind
+class Person {
+  name = "usama";
+  greet() { console.log("Hi, I am " + this.name); }
+}
+// Constructor runs in THIS context:
+const p1 = new Person();  // ✅ Works - initializer runs AFTER constructor body
+```
+
+### Lecture 142: Replacing Methods with Decorators
+#### Replacement Pattern
+```typescript
+function timed(target: Function, context: ClassMethodDecoratorContext) {
+  return function(this: any, ...args: any[]) {
+    const start = Date.now();
+    const result = target.apply(this, args);  // Preserve `this`
+    console.log(`${String(context.name)} took ${Date.now() - start}ms`);
+    return result;
+  };
+}
+
+// Usage:
+class Service {
+  @timed
+  expensiveOperation(items: string[]) {
+    console.log("Processing:", items);
+    return items.length;
+  }
+}
+```
+
+#### Advanced Pattern: Argument Enhancement
+```typescript
+function logArgs(target: Function, context: ClassMethodDecoratorContext) {
+  return function(this: any, ...args: any[]) {
+    console.log(`${String(context.name)} called with:`, args);
+    // Can modify arguments before calling original!
+    const result = target.apply(this, args);
+    console.log(`${String(context.name)} returned:`, result);
+    return result;
+  };
+}
+```
+
+### `bind()` vs `apply()` - Your Key Question Answered
+| Method | Behavior | Use Case |
+|--------|----------|----------|
+| **`bind(this)`** | **Permanently** sets `this`; returns **new function** | When you want to save the binding for future calls |
+| **`apply(this, args)`** | **Temporarily** sets `this`; calls immediately | When you want to call NOW with correct context |
+
+```typescript
+// In addInitializer: this[ctx.name] = this[ctx.name].bind(this)
+// → bind PERMANENTLY sets `this` for future calls
+
+// In return function: target.apply(this)
+// → apply TEMPORARILY sets `this` to call original method NOW
+```
+
+### Best Practices
+1. ✅ **Always return** the replacement function
+2. ✅ **Use `addInitializer`** to bind instance methods
+3. ✅ **Preserve `this` context** with `.call()` or `.apply()`
+4. ✅ **Consider TypeScript types** for method parameters
+5. ✅ **Use `context.name as string`** when accessing method name
