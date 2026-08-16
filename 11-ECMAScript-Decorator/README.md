@@ -12,7 +12,7 @@
 - **140.** Using Decorators To Solve A Common Problem ✅
 - **141.** Implementing A Decorator-based Solution: autobind ✅
 - **142.** Replacing Methods with Decorators ✅
-- **143.** Introducing the Field Decorator
+- **143.** Introducing the Field Decorator ✅
 - **144.** Building Configurable Decorators with Factories
 - **145.** Onwards to Experimental Decorators
 
@@ -691,3 +691,154 @@ function logArgs(target: Function, context: ClassMethodDecoratorContext) {
 3. ✅ **Preserve `this` context** with `.call()` or `.apply()`
 4. ✅ **Consider TypeScript types** for method parameters
 5. ✅ **Use `context.name as string`** when accessing method name
+
+---
+
+## Lecture 143: Introducing the Field Decorator
+
+### Overview
+
+Field decorators **intercept and transform class field values** at the moment they are being assigned. Unlike method decorators (which replace functions), field decorators replace the **assignment process itself**—they act as gatekeepers for new property values.
+
+### Key Insight: Fields vs Methods
+
+| Aspect | Field Decorator | Method Decorator |
+|--------|----------------|------------------|
+| **Target Parameters** | `undefined, ClassFieldDecoratorContext` | `Function, ClassMethodDecoratorContext` |
+| **Decorator Return** | Initializer/transformer function | Replacement function |
+| **Field Value Access** | Via `initialValue` parameter | Via closure/`this` |
+| **Assignment Timing** | During constructor execution | At class definition |
+
+### Basic Structure
+
+```typescript
+function logProperty(target: undefined, context: ClassFieldDecoratorContext) {
+  console.log(`Decorator running for field: ${context.name}`);
+  
+  // Return the "magic" function that will process values
+  return function(initialValue: string) {
+    console.log(`Property ${String(context.name)} being set to ${initialValue}`);
+    return initialValue.toUpperCase(); // Transform the value
+  };
+}
+
+class User {
+  @logProperty
+  username = "usama"; // When you do `new User()`, this transformer runs
+}
+
+const user = new User();
+// Console output:
+// "Decorator running for field: username"
+// "Property username being set to usama"
+console.log(user.username); // "USAMA"
+```
+
+### Your Implementation
+
+Looking at your code, here's how field decorators relate:
+
+```typescript
+// Field Decorator Signature:
+function myFieldDecorator(target: undefined, context: ClassFieldDecoratorContext) {
+  // Return a transformer function
+  return (value: any) => {
+    // This runs when the field is initialized
+    return transformedValue;
+  };
+}
+```
+
+### Common Patterns
+
+1. **Normalization**:
+   ```typescript
+   function normalize(target: undefined, ctx: ClassFieldDecoratorContext) {
+     return (value: string) => value.trim().toLowerCase();
+   }
+   ```
+
+2. **Validation**:
+   ```typescript
+   function required(target: undefined, ctx: ClassFieldDecoratorContext) {
+     return (value: any) => {
+       if (!value) throw new Error(`Field ${ctx.name} is required`);
+       return value;
+     };
+   }
+   ```
+
+3. **Logging**:
+   ```typescript
+   function trace(target: undefined, ctx: ClassFieldDecoratorContext) {
+     return (value: any) => {
+       console.log(`${ctx.name} initialized to ${value}`);
+       return value;
+     };
+   }
+   ```
+
+### Why This Matters
+
+Field decorators provide **data quality control** at the point where class fields are defined:
+- **Validation**: Prevent invalid data from entering the system
+- **Normalization**: Ensure consistent formatting (emails, names, etc.)
+- **Security**: Sanitize inputs before they're stored
+- **Debugging**: Log what's happening during object construction
+- **Developer Experience**: Automatic data processing without boilerplate
+
+### Real-World Example
+
+```typescript
+function sanitizeHtml(target: undefined, context: ClassFieldDecoratorContext) {
+  return (value: string) => {
+    // Remove potentially dangerous characters
+    return value.replace(/[<>]/g, '');
+  };
+}
+
+class Comment {
+  @sanitizeHtml
+  content = "Hello <script>alert('xss')</script> World";
+}
+
+const comment = new Comment();
+console.log(comment.content); // "Hello scriptalert('xss')script World"
+```
+
+### Best Practices
+
+1. ✅ **Always return a transformer function**
+2. ✅ **Handle all value types gracefully**
+3. ✅ **Use `context.name` for better logging**
+4. ✅ **Consider combining with method decorators**
+5. ✅ **Document side effects clearly**
+
+### When to Use Field Decorators
+
+- **Input validation at the class level**
+- **Normalizing data formats** (uppercase, formatting)
+- **Tracing/debugging object construction**
+- **Sanitizing user-provided data**
+- **Adding default values conditionally**
+
+### Comparison with Your Approach
+
+Your method decorator implementation:
+```typescript
+function autobind(target: (...args: any[]) => any, ctx: ClassMethodDecoratorContext) {
+  // target contains the actual method
+  return function(this: any) { /* ... */ };
+}
+```
+
+Field decorators work similarly but:
+- The "target" is always `undefined`
+- You return a **transformer function** instead of a replacement method
+- The transformer receives the `initialValue`
+
+---
+
+## Lecture 135: Types of Decorators
+
+**Instructor's note:** Decorators are an Object-Oriented Programming feature that lets you modify classes, methods, properties, and getters/setters.
