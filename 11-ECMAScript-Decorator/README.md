@@ -6,7 +6,7 @@
 - **134.** What Are Decorators? And ECMAScript Decorators vs Experimental Decorators
 - **135.** Exploring Different Types of Decorators
 - **136.** Building a First Decorator
-- **137.** Building a Class Decorator That Edits a Class
+- **137.** Building a Class Decorator That Edits a Class ✅
 - **138.** Understanding Decorator Code Execution Order
 - **139.** Creating a Method Decorator
 - **140.** Using Decorators To Solve A Common Problem
@@ -246,3 +246,196 @@ class User {
 - Learn **parameter types** for each decorator
 - Build foundation for **complex decorators**
 - Debugging is easier with simple examples
+
+---
+
+## Lecture 137: Building a Class Decorator That Edits a Class
+
+### Lecture 136 vs 137: Moving from Observer to Operator
+
+| Aspect | Lecture 136 | Lecture 137 |
+|--------|-------------|-------------|
+| **Purpose** | Just log information | Actually modify/change class |
+| **Return Value** | Not critical (just logging) | **Critical - must return constructor** |
+| **Modification** | None (read-only) | Can add/remove/seal properties |
+| **Complexity** | Simple logging | Practical class modification |
+| **Real-world use** | Debugging/tracing | Production-ready enhancements |
+
+### Key Concept: Class Decorators That Modify
+
+A class decorator can modify the class constructor in three ways:
+
+1. **Add new properties/methods** to the constructor or prototype
+2. **Seal/freeze** the class (prevent extensions)
+3. **Replace** the constructor entirely
+
+### The Pattern:
+
+```typescript
+function decoratorName(target: Function) {
+  // 1. Modify the target
+  target.newProperty = 'added';
+  
+  // 2. Add a static method
+  target.staticMethod = function() { /* ... */ };
+  
+  // 3. CRITICAL: Return the (possibly modified) constructor
+  return target;
+}
+```
+
+### Example 1: Class Sealer
+
+```typescript
+function sealed(target: Function) {
+  Object.seal(target);
+  Object.seal(target.prototype);
+  
+  return target;
+}
+
+@sealed
+class User {
+  constructor(public name: string) {}
+  
+  getName() {
+    return this.name;
+  }
+}
+
+// Usage:
+const user = new User('Alice');
+
+// ✅ Works normally
+console.log(user.getName()); // 'Alice'
+
+// ❌ Can't add new properties to instance
+user.email = 'alice@example'; // ❌ Error: Cannot add property email
+
+// ❌ Can't extend the class
+class AdminUser extends User {} // ❌ Error: Class extends not allowed
+```
+
+### Example 2: Adding a Utility Method
+
+```typescript
+function WithUtils(target: Function) {
+  // Add a method to the prototype
+  target.prototype.calculate = function(x: number, y: number) {
+    return x + y;
+  };
+  
+  // Add a static method
+  target.getUtils = function() {
+    return 'utils';
+  };
+  
+  return target;
+}
+
+@WithUtils
+class MathClass {
+  // No need to define calculate - it's added by the decorator!
+}
+
+// Usage:
+const utils = MathClass.getUtils(); // 'utils'
+const result = new MathClass().calculate(2, 3); // 5
+```
+
+### Why This Lecture is Important
+
+Moving from "Observer" to "Operator":
+
+- **Lecture 136:** You're **observing** what happens (logging)
+- **Lecture 137:** You're **operating** on the code (modifying)
+
+This is the difference between:
+- ✅ "I want to know when this method is called" (Lecture 136)
+- ✅ "I want to add logging to every method automatically" (Lecture 137)
+
+### Real-World Use Cases
+
+1. **Angular's `@Component` and `@NgModule`** - Modify how Angular processes classes
+2. **NestJS Guards, Pipes, Interceptors** - All use class decorators to modify behavior
+3. **Enforcing Patterns** - Ensure classes follow certain rules (sealed, have methods)
+4. **Adding Cross-Cutting Concerns** - Logging, timing, validation applied to entire classes
+5. **Library Development** - Modify user classes in reusable libraries
+
+### Rules to Remember
+
+**Must Do:**
+1. **Return the constructor** from class decorators
+2. **Use proper signature** `(target: Function) => Function`
+3. **Modify prototype or add static methods**
+4. **Keep modifications focused and documented**
+
+**Common Mistakes:**
+1. **Forgetting to return** - decorator does nothing
+2. **Modifying wrong object** - target vs prototype vs instance
+3. **Sealing after returning** - too late!
+4. **Not considering edge cases** - what if class has existing properties?
+
+### Code Review: Your Implementation
+
+Your current decorator:
+
+```typescript
+function logger<T extends new (...args: any[]) => any>(
+  target: T,
+  ctx: ClassDecoratorContext,
+) {
+  console.log("logger decorator");
+  console.log(target);
+  console.log(ctx);
+  return class extends target {
+    age = 44;
+  };
+}
+
+@logger
+class Person {
+  name = "usama";
+  great() {
+    console.log("Hi,I am" + this.name);
+  }
+}
+
+const person1 = new Person()
+console.log(person1)
+```
+
+**Instructor's typical simpler approach:**
+
+```typescript
+function logger(target: Function, ctx: ClassDecoratorContext) {
+  console.log("logger decorator");
+  console.log(target);
+  console.log(ctx);
+  return class extends (target as any) {
+    age = 44;
+  };
+}
+```
+
+| Aspect | Your Code | Instructor Typical |
+|--------|-----------|-------------------|
+| **Generics** | Uses `<T extends new (...args: any[]) => any>` | Most don't use generics initially |
+| **Type safety** | Highly type-safe (no `as any`) | Often uses `any` for simplicity |
+| **Decorator API** | Uses `ClassDecoratorContext` | ✅ Same approach |
+| **Class modification** | Returns `class extends target` | ✅ Same pattern |
+| **Simplicity** | Some complexity from generics | Simpler, more verbose steps |
+
+**Your implementation is actually MORE advanced** - it uses proper TypeScript generics for full type safety, avoiding the need for `as any` casts!
+
+### Key Takeaways for Lecture 137
+
+1. **Decorators can modify classes**, not just log about them
+2. **Must return the constructor** (or modified version)
+3. **Can seal classes** to prevent unwanted extensions
+4. **Can add methods** via prototype or static methods
+5. **Return `class extends target`** to add instance properties cleanly
+6. **TypeScript generics** (`T extends new (...)`) provide type safety
+7. **Real-world frameworks** (Angular, NestJS) use this exact pattern
+8. **Moving from observer to operator** is a crucial step
+
